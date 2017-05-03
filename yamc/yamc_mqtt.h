@@ -13,9 +13,9 @@
 #define __YAMC_MQTT_H__
 
 #include <stdint.h>
+#include "yamc_port.h"
 
-///Payload buffer length, any payload longer than this will not be processed
-#define YAMC_PKT_MAX_LEN 1024
+
 
 ///Maximum MQTT message length allowed by standard
 #define YAMC_MQTT_MAX_LEN 268435455
@@ -314,12 +314,12 @@ typedef struct
 ///MQTT packet struct
 typedef struct
 {
-	yamc_mqtt_hdr_fixed_t 	fixed_hdr;			///< For fixed packet header
+	yamc_mqtt_hdr_fixed_t 	fixed_hdr;			///< Fixed packet header
 
 	///var_data - buffer for variable header and payload packet fields
 	struct
 	{
-		uint8_t 	data[YAMC_PKT_MAX_LEN+1];	///< Raw packet data buffer except fixed header
+		uint8_t 	data[YAMC_RX_PKT_MAX_LEN+1];	///< Raw packet data buffer except fixed header
 		uint32_t 	pos;						///< raw data write pointer position
 
 	} var_data;

@@ -22,12 +22,16 @@ extern void yamc_decode_pkt(yamc_instance_t* const p_instance);
 //start or restart timeout timer
 static inline void timeout_pat(const yamc_instance_t* const p_instance)
 {
+	YAMC_ASSERT(p_instance!=NULL);
+
 	if(p_instance->handlers.timeout_pat!=NULL) p_instance->handlers.timeout_pat();
 }
 
 //stop timeout timer
 static inline void timeout_stop(const yamc_instance_t* const p_instance)
 {
+	YAMC_ASSERT(p_instance!=NULL);
+
 	if(p_instance->handlers.timeout_stop!=NULL) p_instance->handlers.timeout_stop();
 }
 
@@ -37,6 +41,8 @@ static inline void timeout_stop(const yamc_instance_t* const p_instance)
  */
 static uint8_t yamc_mqtt_decode_remaining_len(yamc_instance_t* const p_instance, const uint8_t data)
 {
+	YAMC_ASSERT(p_instance!=NULL);
+
 	yamc_mqtt_hdr_fixed_t* p_mqtt_hdr_fixed=&p_instance->rx_pkt.fixed_hdr;
 
 	//store data and increment field length
@@ -57,7 +63,7 @@ static uint8_t yamc_mqtt_decode_remaining_len(yamc_instance_t* const p_instance,
 		value += (encodedByte & 127) * multiplier;
 		if (multiplier > 128*128*128)
 		{
-			LOG_ERROR("Malformed Remaining Length\n");
+			YAMC_LOG_ERROR("Malformed Remaining Length\n");
 			p_instance->handlers.disconnect();
 			return false;
 		}
@@ -73,6 +79,9 @@ static uint8_t yamc_mqtt_decode_remaining_len(yamc_instance_t* const p_instance,
 ///Initialize yamc instance
 void yamc_init(yamc_instance_t* const p_instance, const yamc_handler_cfg_t* const p_handler_cfg)
 {
+	YAMC_ASSERT(p_instance!=NULL);
+	YAMC_ASSERT(p_handler_cfg!=NULL);
+
 	memset(p_instance,0, sizeof(yamc_instance_t));
 	memcpy(&p_instance->handlers,p_handler_cfg, sizeof(yamc_handler_cfg_t));
 }
@@ -82,7 +91,10 @@ void yamc_init(yamc_instance_t* const p_instance, const yamc_handler_cfg_t* cons
 //parse incoming data buffer
 void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_buff, uint32_t len)
 {
-	LOG_DEBUG("Raw data:");
+	YAMC_ASSERT(p_instance!=NULL);
+	YAMC_ASSERT(p_buff!=NULL);
+
+	YAMC_LOG_DEBUG("Raw data:");
 	yamc_log_hex(p_buff,len);
 
 	//there's data for more than one parser state, repeat
@@ -111,7 +123,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 
 		//Capture packet type and go to YAMC_PARSER_FIX_HDR state
 		case YAMC_PARSER_IDLE:
-			LOG_DEBUG("State: YAMC_PARSER_IDLE\n");
+			YAMC_LOG_DEBUG("State: YAMC_PARSER_IDLE\n");
 
 			memset(&p_instance->rx_pkt,0,sizeof(yamc_mqtt_pkt_t));
 
@@ -121,7 +133,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 			//error-check packet type
 			if(p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type>YAMC_PKT_DISCONNECT || p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type<YAMC_PKT_CONNECT)
 			{
-				LOG_ERROR("Invalid packet type: %02X\n",p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type);
+				YAMC_LOG_ERROR("Invalid packet type: %02X\n",p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type);
 				p_instance->handlers.disconnect();
 				return;
 			}
@@ -137,7 +149,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 
 		//Parser is collecting fixed header data
 		case YAMC_PARSER_FIX_HDR:
-			LOG_DEBUG("State: YAMC_PARSER_FIX_HDR\n");
+			YAMC_LOG_DEBUG("State: YAMC_PARSER_FIX_HDR\n");
 
 			uint8_t decode_remaining_len_done=false;
 
@@ -150,13 +162,13 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 			//error check decoded length
 			if(p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val > YAMC_MQTT_MAX_LEN)
 			{
-				LOG_ERROR("Decoded var_data length exceeds MQTT spec.\n");
+				YAMC_LOG_ERROR("Decoded var_data length exceeds MQTT spec.\n");
 				p_instance->handlers.disconnect();
 				return;
 			}
 
 			//go to YAMC_PARSER_VAR_DATA or YAMC_PARSER_SKIP_PKT based on if we can fit rest of the packet into rx_buffer
-			if(p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val < YAMC_PKT_MAX_LEN) p_instance->parser_state=YAMC_PARSER_VAR_DATA;
+			if(p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val < YAMC_RX_PKT_MAX_LEN) p_instance->parser_state=YAMC_PARSER_VAR_DATA;
 			else p_instance->parser_state=YAMC_PARSER_SKIP_PKT;
 
 			//if there's more data or packet doesn't contain var_data field immediately go to next state via reparse flag
@@ -165,13 +177,13 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 
 
 		case YAMC_PARSER_SKIP_PKT:		///< Packet is too long to process, drop data until next one arrives
-			LOG_DEBUG("State: YAMC_PARSER_SKIP_PKT\n");
+			YAMC_LOG_DEBUG("State: YAMC_PARSER_SKIP_PKT\n");
 
 			//intentional fallthrough!
 
 		case YAMC_PARSER_VAR_DATA:		///< Parser is collecting variable header and payload data
 
-			LOG_DEBUG("State: YAMC_PARSER_VAR_DATA\n");
+			YAMC_LOG_DEBUG("State: YAMC_PARSER_VAR_DATA\n");
 
 			bytes_to_copy=len-buff_pos;
 			p_var_data_start=&p_buff[buff_pos];
@@ -185,7 +197,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 				//there's more than one packet in buffer
 				if(bytes_to_copy>0)
 				{
-					LOG_DEBUG("no var_data: More than one packet\n");
+					YAMC_LOG_DEBUG("no var_data: More than one packet\n");
 
 					//since there's more data in p_buff more than one packet is present
 					next_packet_present=true;
@@ -206,13 +218,13 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 			//if not copy only var_data bytes
 			else
 			{
-				LOG_DEBUG("More than one packet present\n");
+				YAMC_LOG_DEBUG("More than one packet present\n");
 
 				uint32_t buffer_remaining_len=p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val-p_instance->rx_pkt.var_data.pos;
 
 				if(buffer_remaining_len>bytes_to_copy)
 				{
-					LOG_ERROR("Too much to copy!\n");
+					YAMC_LOG_ERROR("Too much to copy!\n");
 					buffer_remaining_len=bytes_to_copy;
 				}
 
@@ -249,14 +261,13 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 			}
 			break;
 
-		case YAMC_PARSER_DONE:			///< Complete packet has been received
-			LOG_DEBUG("State: YAMC_PARSER_DONE\n");
+		case YAMC_PARSER_DONE:		///< Complete packet has been received
+			YAMC_LOG_DEBUG("State: YAMC_PARSER_DONE\n");
 
 			//stop timeout measurement
 			timeout_stop(p_instance);
 
-			//stub! TODO: parse packet data here
-			yamc_log_raw_pkt(p_instance);
+			//pass execution to packet data decoders, this will launch 'new packet arrived' handler
 			yamc_decode_pkt(p_instance);
 
 			//go to idle state and wait for next packet

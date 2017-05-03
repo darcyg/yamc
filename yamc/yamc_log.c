@@ -72,14 +72,18 @@ static const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
 
 void yamc_log_hex(const uint8_t* const p_buff, const uint32_t buff_len)
 {
+	YAMC_ASSERT(p_buff!=NULL);
+
 	for (uint32_t i=0; i<buff_len; i++)
-			LOG_DEBUG("%02X ",p_buff[i]);
-		LOG_DEBUG("\n");
+			YAMC_LOG_DEBUG("%02X ",p_buff[i]);
+		YAMC_LOG_DEBUG("\n");
 }
 
 void yamc_log_raw_pkt(const yamc_instance_t* const p_instance)
 {
-	LOG_DEBUG("> %s - %d bytes: ",
+	YAMC_ASSERT(p_instance!=NULL);
+
+	YAMC_LOG_DEBUG("> %s - %d bytes: ",
 			yamc_mqtt_pkt_type_to_str(p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type),
 			p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val);
 

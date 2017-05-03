@@ -23,9 +23,10 @@
 #include <time.h>
 
 #include "yamc.h"
+#include "yamc_port.h"
 
-//Unused parameter macro
-#define UNUSED_PARAMETER(x) (void) x
+//example user defined packet handlers, dump everything to console
+#include "yamc_runner_pkt_handlers.h"
 
 //print to stderr
 #define PRINT_ERR(...) fprintf(stderr, __VA_ARGS__)
@@ -51,7 +52,7 @@ static timer_t timeout_timer;
 //timeout timer signal handler
 static void timeout_handler(sigval_t sigval)
 {
-	UNUSED_PARAMETER(sigval);
+	YAMC_UNUSED_PARAMETER(sigval);
 
 	PRINT_ERR("Timeout!\n");
 	fflush(stderr);
@@ -127,10 +128,16 @@ static void disconnect_handler(void)
 	exit(-1);
 }
 
+static void pkt_data_handler(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
+{
+	//example user defined packet handlers, dump everything to console
+	yamc_debug_pkt_handler_main(p_instance, p_pkt_data);
+}
+
 //receive data from socket thread
 static void *read_sock_thr(void* p_ctx)
 {
-	UNUSED_PARAMETER(p_ctx);
+	YAMC_UNUSED_PARAMETER(p_ctx);
 
 	//buffer for incoming data
 	static uint8_t rx_buff[10];
@@ -236,10 +243,15 @@ int main(int argc, char *argv[])
 			.disconnect=disconnect_handler,
 			.write=socket_write_buff,
 			.timeout_pat=timeout_pat,
-			.timeout_stop=timeout_stop
+			.timeout_stop=timeout_stop,
+			.pkt_handler=pkt_data_handler
 	};
 
 	yamc_init(&yamc_instance, &handler_cfg);
+
+	//enable pkt_handler for following packet types
+	yamc_instance.parser_enables.CONNACK=true;
+	yamc_instance.parser_enables.PUBLISH=true;
 
 	//create thread
 	pthread_create(&rx_tid, NULL, read_sock_thr, NULL);
