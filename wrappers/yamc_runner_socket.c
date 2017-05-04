@@ -43,8 +43,8 @@ static pthread_t rx_tid;
 static yamc_instance_t yamc_instance;
 
 //timeout timer settings
-#define YAMC_TIMEOUT_S	30	//seconds
-#define YAMC_TIMEOUT_NS	0	//nanoseconds
+#define YAMC_TIMEOUT_S		30	//seconds
+#define YAMC_TIMEOUT_NS		0	//nanoseconds
 
 //timeout timer handle
 static timer_t timeout_timer;
@@ -252,6 +252,9 @@ int main(int argc, char *argv[])
 	//enable pkt_handler for following packet types
 	yamc_instance.parser_enables.CONNACK=true;
 	yamc_instance.parser_enables.PUBLISH=true;
+	yamc_instance.parser_enables.PUBACK=true;
+	yamc_instance.parser_enables.PINGRESP=true;
+	yamc_instance.parser_enables.SUBACK=true;
 
 	//create thread
 	pthread_create(&rx_tid, NULL, read_sock_thr, NULL);
@@ -262,32 +265,31 @@ int main(int argc, char *argv[])
 	//send MQTT connect packet
 	uint8_t connect_msg[]={
 			//fixed header
-			0x10, 	//packet type + flags
-			16,	//remaining length
+			0x10,						//packet type + flags
+			16,							//remaining length
 
 			//variable header
-			//protocol name
-			0,4,'M','Q','T','T',
-			//protocol level
-			4,
+
+			0,4,'M','Q','T','T',		//protocol name
+			4,							//protocol level
 			//connect flags
-			2, //clean session
+			2, 							//clean session
 			//keep alive
-			0, 30, //30 s keepalive
+			0, 30, 						//30 s keepalive
 
 			//payload
-			0,4,'T','e','s','t' //client Id
+			0,4,'T','e','s','t' 		//client Id
 
 	};
 	socket_write_buff(connect_msg, sizeof(connect_msg));
 
 	//subscribe to topic 'test/#'
 	uint8_t subscribe_msg[]={
-			0x82,	//packet type and qos flag
-			11,		//remaining length
-			0,11,	//packet identifier
-			0,6,'t','e','s','t','/','#', //topic to subscribe to
-			0x01	//requested qos
+			0x82,							//packet type and QoS flag
+			11,								//remaining length
+			0,11,							//packet identifier
+			0,6,'t','e','s','t','/','#',	//topic to subscribe to
+			0x01							//requested QoS
 	};
 	socket_write_buff(subscribe_msg, sizeof(subscribe_msg));
 
@@ -296,8 +298,9 @@ int main(int argc, char *argv[])
 	{
 		uint8_t pingreq_msg[]={
 				//fixed header only
-				12 << 4, //packet type
-				0		//remaining length
+
+				12 << 4,	//packet type
+				0			//remaining length
 
 		};
 
