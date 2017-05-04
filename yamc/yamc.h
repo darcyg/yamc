@@ -73,6 +73,7 @@ typedef struct
 		yamc_mqtt_pkt_pubcomp_t		pubcomp;
 		yamc_mqtt_pkt_subscribe_t	subscribe;
 		yamc_mqtt_pkt_suback_t		suback;
+		yamc_mqtt_pkt_unsuback_t	unsuback;
 
 	} pkt_data;
 

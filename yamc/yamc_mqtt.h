@@ -250,6 +250,7 @@ typedef yamc_mqtt_pkt_generic_pubx_t yamc_mqtt_pkt_puback_t;
 typedef yamc_mqtt_pkt_generic_pubx_t yamc_mqtt_pkt_pubrec_t;
 typedef yamc_mqtt_pkt_generic_pubx_t yamc_mqtt_pkt_pubrel_t;
 typedef yamc_mqtt_pkt_generic_pubx_t yamc_mqtt_pkt_pubcomp_t;
+typedef yamc_mqtt_pkt_generic_pubx_t yamc_mqtt_pkt_unsuback_t;
 
 ///MQTT SUBSCRIBE topic filter/ QoS pair
 typedef struct

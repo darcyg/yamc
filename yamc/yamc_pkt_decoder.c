@@ -209,6 +209,10 @@ static inline yamc_retcode_t yamc_decode_pub_x(const yamc_instance_t* const p_in
 		p_dest_pkt=&p_pkt_data->pkt_data.pubcomp;
 		break;
 
+	case YAMC_PKT_UNSUBACK:
+		p_dest_pkt=&p_pkt_data->pkt_data.unsuback;
+		break;
+
 	default:
 		return YAMC_ERROR_CANT_PARSE;
 	}
@@ -218,34 +222,26 @@ static inline yamc_retcode_t yamc_decode_pub_x(const yamc_instance_t* const p_in
 	return YAMC_SUCCESS;
 }
 
-static inline yamc_retcode_t yamc_decode_suback(const yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
+static inline yamc_retcode_t yamc_decode_suback(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
 {
 	YAMC_ASSERT(p_instance!=NULL);
 	YAMC_ASSERT(p_pkt_data!=NULL);
 
-	YAMC_LOG_DEBUG("Stub: yamc_decode_suback NOT implemented!!\n");
+	yamc_mqtt_pkt_suback_t* const p_dest_pkt=&p_pkt_data->pkt_data.suback;
+	uint8_t* const p_raw_data=p_instance->rx_pkt.var_data.data;
+	uint32_t pkt_length=p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val;
 
-	return YAMC_ERROR_CANT_PARSE;
-}
+	//minimal suback packet is 3 bytes long
+	if(pkt_length < 3) return YAMC_ERROR_CANT_PARSE;
 
-static inline yamc_retcode_t yamc_decode_unsuback(const yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
-{
-	YAMC_ASSERT(p_instance!=NULL);
-	YAMC_ASSERT(p_pkt_data!=NULL);
+	//first 2 bytes - packet id
+	p_dest_pkt->pkt_id=decode_mqtt_word(p_raw_data);
 
-	YAMC_LOG_DEBUG("Stub: yamc_decode_unsuback NOT implemented!!\n");
+	//rest - array of return codes
+	p_dest_pkt->payload.p_retcodes=&p_raw_data[2];
+	p_dest_pkt->payload.retcodes_len=pkt_length-2;
 
-	return YAMC_ERROR_CANT_PARSE;
-}
-
-static inline yamc_retcode_t yamc_decode_pingresp(const yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
-{
-	YAMC_ASSERT(p_instance!=NULL);
-	YAMC_ASSERT(p_pkt_data!=NULL);
-
-	YAMC_LOG_DEBUG("Stub: yamc_decode_pingresp NOT implemented!!\n");
-
-	return YAMC_ERROR_CANT_PARSE;
+	return YAMC_SUCCESS;
 }
 
 //decode assembled MQTT packet data and call user defined event handler
@@ -283,6 +279,7 @@ void yamc_decode_pkt(yamc_instance_t* const p_instance)
 	case YAMC_PKT_PUBREC:
 	case YAMC_PKT_PUBREL:
 	case YAMC_PKT_PUBCOMP:
+	case YAMC_PKT_UNSUBACK:
 		decoder_retcode=yamc_decode_pub_x(p_instance, &mqtt_pkt_data);
 		break;
 
@@ -290,12 +287,9 @@ void yamc_decode_pkt(yamc_instance_t* const p_instance)
 		decoder_retcode=yamc_decode_suback(p_instance, &mqtt_pkt_data);
 		break;
 
-	case YAMC_PKT_UNSUBACK:
-		decoder_retcode=yamc_decode_unsuback(p_instance, &mqtt_pkt_data);
-		break;
-
 	case YAMC_PKT_PINGRESP:
-		decoder_retcode=yamc_decode_pingresp(p_instance, &mqtt_pkt_data);
+		//pingresp has no var_data, nothing to parse
+		decoder_retcode=YAMC_SUCCESS;
 		break;
 
 	default:
@@ -303,6 +297,6 @@ void yamc_decode_pkt(yamc_instance_t* const p_instance)
 		break;
 	}
 
-	//if packet was decoded success fully launch user handler
+	//if packet was decoded successfully launch user handler
 	if(decoder_retcode==YAMC_SUCCESS) p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data);
 }

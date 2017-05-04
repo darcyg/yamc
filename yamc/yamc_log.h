@@ -14,6 +14,8 @@
 
 #include "yamc_port.h"
 
+const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type);
+
 #ifdef YAMC_DEBUG
 
 ///debug log macro
@@ -25,13 +27,13 @@
 void yamc_log_hex(const uint8_t* const p_buff, const uint32_t buff_len);
 void yamc_log_raw_pkt(const yamc_instance_t* const p_instance);
 
-#else
+#else /* YAMC_DEBUG not defined */
 
 #define YAMC_LOG_DEBUG(...)
 #define YAMC_LOG_ERROR(...)
 #define yamc_log_hex(...)
 #define yamc_log_raw_pkt(...)
 
-#endif
+#endif /* YAMC_DEBUG */
 
 #endif /* YAMC_LOG_H_ */

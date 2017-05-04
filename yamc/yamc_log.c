@@ -19,7 +19,7 @@
 
 #ifdef YAMC_DEBUG
 
-static const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
+const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
 {
 	switch(pkt_type)
 	{
