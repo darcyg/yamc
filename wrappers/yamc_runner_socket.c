@@ -150,7 +150,7 @@ static void *read_sock_thr(void* p_ctx)
 		//zero rx buffer
 		memset(rx_buff, 0, sizeof(rx_buff));
 
-		rx_bytes = read(server_socket, rx_buff, sizeof(rx_buff) - 1); //sizeof-1 to store null terminator
+		rx_bytes = read(server_socket, rx_buff, sizeof(rx_buff));
 
 		//there was error code thrown by read()
 		if (rx_bytes < 0)
@@ -161,7 +161,7 @@ static void *read_sock_thr(void* p_ctx)
 		}
 
 		//process buffer here
-		yamc_parse_buff(&yamc_instance, rx_buff, rx_bytes);
+		if(rx_bytes > 0) yamc_parse_buff(&yamc_instance, rx_buff, rx_bytes);
 
 	} while (rx_bytes > 0);
 
