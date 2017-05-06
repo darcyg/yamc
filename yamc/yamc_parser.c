@@ -49,7 +49,7 @@ static inline void timeout_stop(const yamc_instance_t* const p_instance)
  * Store next 'remaining length' field byte and check if value can be decoded.
  * Packet length field can be 1-4 bytes long. This function returns false until result is properly decoded
  */
-static uint8_t yamc_mqtt_decode_remaining_len(yamc_instance_t* const p_instance, const uint8_t data)
+static inline uint8_t yamc_mqtt_decode_remaining_len(yamc_instance_t* const p_instance, const uint8_t data)
 {
 	YAMC_ASSERT(p_instance!=NULL);
 
