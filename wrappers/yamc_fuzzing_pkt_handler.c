@@ -1,7 +1,7 @@
 /*
  * YAMC - Yet Another MQTT Client library
  *
- * yamc_runner_pkt_handlers.c - Example code for yamc 'new packet' event handlers.
+ * yamc_fuzzing_pkt_handler.c - overwrite parsed data to detect memory allocation problems
  *
  * Author: Michal Lower <keton22@gmail.com>
  *
@@ -11,7 +11,11 @@
 
 #include "yamc.h"
 #include "yamc_log.h"
-#include "yamc_runner_pkt_handlers.h"
+#include <string.h>
+
+//supposedly this should tell optimizer to leave my memsets alone
+void *(* volatile memset_s)(void *s, int c, size_t n) = memset;
+
 
 static inline void yamc_handle_connack(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
 {
@@ -33,6 +37,9 @@ static inline void yamc_handle_publish(const yamc_instance_t* const p_instance, 
 	YAMC_DEBUG_PRINTF("PUBLISH topic: \"%.*s\" msg: \"%.*s\"\n",
 			p_data->topic_name.len, p_data->topic_name.str, p_data->payload.data_len, p_data->payload.p_data);
 
+	//overwrite decoded data so program has chance to crash on bad memory allocation
+	memset_s(p_data->topic_name.str, 0, p_data->topic_name.len);
+	memset_s(p_data->payload.p_data, 0, p_data->payload.data_len);
 }
 
 static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -86,6 +93,9 @@ static inline void yamc_handle_suback(const yamc_instance_t* const p_instance, c
 		YAMC_DEBUG_PRINTF("\t Topic: %u, retcode: 0x%02X\n", i, p_data->payload.p_retcodes[i]);
 	}
 
+	//overwrite decoded data so program has chance to crash on bad memory allocation
+	memset_s(p_data->payload.p_retcodes, 0, p_data->payload.retcodes_len);
+
 }
 
 static inline void yamc_handle_pingresp(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -98,7 +108,7 @@ static inline void yamc_handle_pingresp(const yamc_instance_t* const p_instance,
 }
 
 
-void yamc_debug_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
+void yamc_fuzzing_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
 {
 	YAMC_ASSERT(p_instance!=NULL);
 	YAMC_ASSERT(p_pkt_data!=NULL);

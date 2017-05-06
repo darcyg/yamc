@@ -26,11 +26,7 @@
 #include "yamc.h"
 #include "yamc_port.h"
 
-//example user defined packet handlers, dump everything to console
-#include "yamc_runner_pkt_handlers.h"
-
-//print to stderr
-#define PRINT_ERR(...) fprintf(stderr, __VA_ARGS__)
+#include <yamc_debug_pkt_handler.h> //example user defined packet handlers, dump everything to console
 
 //if true server has disconnected, exit
 volatile uint8_t exit_now = false;
@@ -55,7 +51,7 @@ static void timeout_handler(sigval_t sigval)
 {
 	YAMC_UNUSED_PARAMETER(sigval);
 
-	PRINT_ERR("Timeout!\n");
+	YAMC_ERROR_PRINTF("Timeout!\n");
 	fflush(stderr);
 
 	exit(-1);
@@ -73,7 +69,7 @@ static void timeout_pat(void)
 	int err_code=timer_settime(timeout_timer,0,&its,NULL);
 	if(err_code<0)
 	{
-		PRINT_ERR("Timer error\n");
+		YAMC_ERROR_PRINTF("Timer error\n");
 		exit(-1);
 	}
 }
@@ -87,7 +83,7 @@ static void timeout_stop(void)
 	int err_code=timer_settime(timeout_timer,0,&its,NULL);
 	if(err_code<0)
 	{
-		PRINT_ERR("Timer error\n");
+		YAMC_ERROR_PRINTF("Timer error\n");
 		exit(-1);
 	}
 }
@@ -108,7 +104,7 @@ static void setup_timer(void)
 
 	if ((err_code=timer_create(CLOCK_REALTIME, &sev, &timeout_timer))<0)
 	{
-		PRINT_ERR("ERROR setting up timeout timer: %s\n", strerror(err_code));
+		YAMC_ERROR_PRINTF("ERROR setting up timeout timer: %s\n", strerror(err_code));
 		exit(0);
 	}
 
@@ -119,20 +115,14 @@ static int socket_write_buff(uint8_t * buff, uint32_t len)
 {
 	int n = write(server_socket, buff, len);
 	if (n < 0)
-		PRINT_ERR("ERROR writing to socket:%s\n", strerror(n));
+		YAMC_ERROR_PRINTF("ERROR writing to socket:%s\n", strerror(n));
 	return n;
 }
 
 static void disconnect_handler(void)
 {
-	PRINT_ERR("yamc requested to drop connection!\n");
+	YAMC_ERROR_PRINTF("yamc requested to drop connection!\n");
 	exit(-1);
-}
-
-static void pkt_data_handler(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
-{
-	//example user defined packet handlers, dump everything to console
-	yamc_debug_pkt_handler_main(p_instance, p_pkt_data);
 }
 
 //receive data from socket thread
@@ -141,7 +131,7 @@ static void *read_sock_thr(void* p_ctx)
 	YAMC_UNUSED_PARAMETER(p_ctx);
 
 	//buffer for incoming data
-	static uint8_t rx_buff[10];
+	uint8_t rx_buff[10];
 
 	//how many bytes were received in single read operation or read() error code
 	int rx_bytes = 0;
@@ -156,7 +146,7 @@ static void *read_sock_thr(void* p_ctx)
 		//there was error code thrown by read()
 		if (rx_bytes < 0)
 		{
-			PRINT_ERR("TCP read() error: %s\n", strerror(rx_bytes));
+			YAMC_ERROR_PRINTF("TCP read() error: %s\n", strerror(rx_bytes));
 			exit_now=true;
 			pthread_exit(&rx_bytes);
 		}
@@ -186,13 +176,13 @@ static void setup_socket(int* p_socket, char *hostname, int portno)
 	//create socket
 	*p_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (*p_socket < 0)
-		PRINT_ERR("ERROR opening socket\n");
+		YAMC_ERROR_PRINTF("ERROR opening socket\n");
 
 	//perform host name lookup
 	server = gethostbyname(hostname);
 	if (server == NULL)
 	{
-		fprintf(stderr, "ERROR, no such host\n");
+		YAMC_ERROR_PRINTF("ERROR, no such host\n");
 		exit(0);
 	}
 
@@ -211,7 +201,7 @@ static void setup_socket(int* p_socket, char *hostname, int portno)
 	if ((err_code = connect(*p_socket, (struct sockaddr *) &serv_addr,
 			sizeof(serv_addr))) < 0)
 	{
-		PRINT_ERR("ERROR connecting: %s\n", strerror(err_code));
+		YAMC_ERROR_PRINTF("ERROR connecting: %s\n", strerror(err_code));
 		exit(0);
 	}
 }
@@ -222,7 +212,7 @@ int main(int argc, char *argv[])
 
 	if (argc < 3)
 	{
-		fprintf(stderr, "usage %s hostname port\n", argv[0]);
+		YAMC_ERROR_PRINTF("usage %s hostname port\n", argv[0]);
 		exit(0);
 	}
 
@@ -235,7 +225,7 @@ int main(int argc, char *argv[])
 	setup_socket(&server_socket, argv[1], portno);
 
 	//Create receive data thread
-	printf("Connected launching rx thread...\n");
+	YAMC_DEBUG_PRINTF("Connected launching rx thread...\n");
 
 	//show startup messages on console
 	fflush(stdout);
@@ -245,7 +235,7 @@ int main(int argc, char *argv[])
 			.write=socket_write_buff,
 			.timeout_pat=timeout_pat,
 			.timeout_stop=timeout_stop,
-			.pkt_handler=pkt_data_handler
+			.pkt_handler=yamc_debug_pkt_handler_main
 	};
 
 	yamc_init(&yamc_instance, &handler_cfg);
