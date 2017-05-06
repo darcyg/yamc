@@ -18,7 +18,7 @@ static inline void yamc_handle_connack(const yamc_instance_t* const p_instance, 
 	YAMC_ASSERT(p_instance!=NULL);
 	YAMC_ASSERT(p_pkt_data!=NULL);
 
-	YAMC_LOG_DEBUG("CONNACK: session_present: %d, ret_code: 0x%02X\n",
+	YAMC_DEBUG_PRINTF("CONNACK: session_present: %d, ret_code: 0x%02X\n",
 			p_pkt_data->pkt_data.connack.ack_flags.flags.session_present, p_pkt_data->pkt_data.connack.return_code);
 
 }
@@ -30,7 +30,7 @@ static inline void yamc_handle_publish(const yamc_instance_t* const p_instance, 
 
 	const yamc_mqtt_pkt_publish_t* const p_data=&p_pkt_data->pkt_data.publish;
 
-	YAMC_LOG_DEBUG("PUBLISH topic: \"%.*s\" msg: \"%.*s\"\n",
+	YAMC_DEBUG_PRINTF("PUBLISH topic: \"%.*s\" msg: \"%.*s\"\n",
 			p_data->topic_name.len, p_data->topic_name.str, p_data->payload.data_len, p_data->payload.p_data);
 
 }
@@ -65,10 +65,11 @@ static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, co
 		break;
 
 	default:
+		YAMC_ERROR_PRINTF("Unknown pub_x type: 0x%02X\n", p_pkt_data->pkt_type);
 		return;
 	}
 
-	YAMC_LOG_DEBUG("%s: pkt_id: %d\n", yamc_mqtt_pkt_type_to_str(p_pkt_data->pkt_type), p_dest_pkt->packet_id);
+	YAMC_DEBUG_PRINTF("%s: pkt_id: %d\n", yamc_mqtt_pkt_type_to_str(p_pkt_data->pkt_type), p_dest_pkt->packet_id);
 }
 
 static inline void yamc_handle_suback(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -78,11 +79,11 @@ static inline void yamc_handle_suback(const yamc_instance_t* const p_instance, c
 
 	const yamc_mqtt_pkt_suback_t* const p_data=&p_pkt_data->pkt_data.suback;
 
-	YAMC_LOG_DEBUG("SUBACK: pkt_id:%d %d return codes in payload\n", p_data->pkt_id, p_data->payload.retcodes_len);
+	YAMC_DEBUG_PRINTF("SUBACK: pkt_id:%d %d return codes in payload\n", p_data->pkt_id, p_data->payload.retcodes_len);
 
 	for (uint16_t i=0;i<p_data->payload.retcodes_len; i++)
 	{
-		YAMC_LOG_DEBUG("\t Topic: %u, retcode: 0x%02X\n", i, p_data->payload.p_retcodes[i]);
+		YAMC_DEBUG_PRINTF("\t Topic: %u, retcode: 0x%02X\n", i, p_data->payload.p_retcodes[i]);
 	}
 
 }
@@ -92,12 +93,12 @@ static inline void yamc_handle_pingresp(const yamc_instance_t* const p_instance,
 	YAMC_ASSERT(p_instance!=NULL);
 	YAMC_ASSERT(p_pkt_data!=NULL);
 
-	YAMC_LOG_DEBUG("PINGRESP\n");
+	YAMC_DEBUG_PRINTF("PINGRESP\n");
 
 }
 
 
-inline void yamc_debug_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
+void yamc_debug_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
 {
 	YAMC_ASSERT(p_instance!=NULL);
 	YAMC_ASSERT(p_pkt_data!=NULL);
@@ -130,7 +131,7 @@ inline void yamc_debug_pkt_handler_main(yamc_instance_t* const p_instance, const
 		break;
 
 	default:
-		YAMC_LOG_ERROR("Unknown packet type %d\n", p_pkt_data->pkt_type);
+		YAMC_ERROR_PRINTF("Unknown packet type %d\n", p_pkt_data->pkt_type);
 		break;
 	}
 
