@@ -21,6 +21,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <time.h>
+#include <signal.h>
 
 #include "yamc.h"
 #include "yamc_port.h"
