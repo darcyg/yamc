@@ -9,6 +9,17 @@
  *
  */
 
+/*
+ * this file is intended to be included as a part of yamc_parser.c
+ *
+ * Wrapping in #ifdef __YAMC_INTERNALS__ to prevent accidental inclusion
+ *
+ */
+#ifdef __YAMC_INTERNALS__
+
+#ifndef __YAMC_INTERNAL_PKT_DECODER_H__
+#define __YAMC_INTERNAL_PKT_DECODER_H__
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,12 +107,12 @@ static yamc_retcode_t decode_mqtt_string(uint8_t* const p_raw_data, uint32_t* p_
 	YAMC_ASSERT(p_len!=NULL);
 
 	//minimal MQTT string is 3 bytes long - 2 bytes of length + 1 char
-	if((*p_len) < 3) return YAMC_ERROR_INVALID_DATA;
+	if((*p_len) < 3) return YAMC_RET_INVALID_DATA;
 
 	uint16_t str_len=decode_mqtt_word(p_raw_data);
 
-	//decoded string length is longer that remaining data
-	if(str_len>(*p_len)) return YAMC_ERROR_INVALID_DATA;
+	//decoded string length + string length field is longer that remaining data
+	if(str_len+2u>(*p_len)) return YAMC_RET_INVALID_DATA;
 
 	//store pointer to string
 	p_mqtt_str->str=&p_raw_data[2];
@@ -112,7 +123,7 @@ static yamc_retcode_t decode_mqtt_string(uint8_t* const p_raw_data, uint32_t* p_
 	//store buffer position increment - string length + 2 bytes for length data
 	*p_len=str_len+2;
 
-	return YAMC_SUCCESS;
+	return YAMC_RET_SUCCESS;
 }
 
 static inline yamc_retcode_t yamc_decode_connack(const yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -124,7 +135,7 @@ static inline yamc_retcode_t yamc_decode_connack(const yamc_instance_t* const p_
 	{
 		YAMC_LOG_ERROR("Wrong packet len: %d or %d\n",
 				p_instance->rx_pkt.var_data.pos, p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val);
-		return YAMC_ERROR_CANT_PARSE;
+		return YAMC_RET_CANT_PARSE;
 	}
 
 	yamc_mqtt_pkt_connack_t* const p_dest_pkt=&p_pkt_data->pkt_data.connack;
@@ -133,7 +144,7 @@ static inline yamc_retcode_t yamc_decode_connack(const yamc_instance_t* const p_
 	p_dest_pkt->ack_flags.raw=p_raw_data[0];
 	p_dest_pkt->return_code=(yamc_mqtt_connack_retcode_t)p_raw_data[1];
 
-	return YAMC_SUCCESS;
+	return YAMC_RET_SUCCESS;
 }
 
 static inline yamc_retcode_t yamc_decode_publish(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -152,7 +163,7 @@ static inline yamc_retcode_t yamc_decode_publish(yamc_instance_t* const p_instan
 	yamc_retcode_t ret_code;
 
 	ret_code=decode_mqtt_string(p_raw_data, &rem_length, &p_dest_pkt->topic_name);
-	if(ret_code!=YAMC_SUCCESS) return YAMC_ERROR_CANT_PARSE;
+	if(ret_code!=YAMC_RET_SUCCESS) return YAMC_RET_CANT_PARSE;
 
 	raw_data_pos+=rem_length;
 	rem_length=pkt_length-raw_data_pos;
@@ -163,17 +174,20 @@ static inline yamc_retcode_t yamc_decode_publish(yamc_instance_t* const p_instan
 		p_dest_pkt->packet_id=decode_mqtt_word(&p_raw_data[raw_data_pos]);
 		raw_data_pos+=2;
 
-		if(raw_data_pos>pkt_length) return YAMC_ERROR_CANT_PARSE;
+		if(raw_data_pos>pkt_length) return YAMC_RET_CANT_PARSE;
 
 		rem_length=pkt_length-raw_data_pos;
 	}
+
+	//sanity check of payload length
+	if(rem_length>pkt_length) return YAMC_RET_CANT_PARSE;
 
 	//rest is topic payload
 	p_dest_pkt->payload.data_len=rem_length;
 	if(rem_length>0) p_dest_pkt->payload.p_data=&p_raw_data[raw_data_pos]; //leave null pointer if payload is zero bytes long
 
 
-	return YAMC_SUCCESS;
+	return YAMC_RET_SUCCESS;
 }
 
 static inline yamc_retcode_t yamc_decode_pub_x(const yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -185,7 +199,7 @@ static inline yamc_retcode_t yamc_decode_pub_x(const yamc_instance_t* const p_in
 	{
 		YAMC_LOG_ERROR("Wrong packet len: %d or %d\n",
 				p_instance->rx_pkt.var_data.pos, p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val);
-		return YAMC_ERROR_CANT_PARSE;
+		return YAMC_RET_CANT_PARSE;
 	}
 
 	const uint8_t* const p_raw_data=p_instance->rx_pkt.var_data.data;
@@ -214,12 +228,12 @@ static inline yamc_retcode_t yamc_decode_pub_x(const yamc_instance_t* const p_in
 		break;
 
 	default:
-		return YAMC_ERROR_CANT_PARSE;
+		return YAMC_RET_CANT_PARSE;
 	}
 
 	p_dest_pkt->packet_id=decode_mqtt_word(&p_raw_data[0]);
 
-	return YAMC_SUCCESS;
+	return YAMC_RET_SUCCESS;
 }
 
 static inline yamc_retcode_t yamc_decode_suback(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -232,7 +246,7 @@ static inline yamc_retcode_t yamc_decode_suback(yamc_instance_t* const p_instanc
 	uint32_t pkt_length=p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val;
 
 	//minimal suback packet is 3 bytes long
-	if(pkt_length < 3) return YAMC_ERROR_CANT_PARSE;
+	if(pkt_length < 3) return YAMC_RET_CANT_PARSE;
 
 	//first 2 bytes - packet id
 	p_dest_pkt->pkt_id=decode_mqtt_word(p_raw_data);
@@ -241,11 +255,11 @@ static inline yamc_retcode_t yamc_decode_suback(yamc_instance_t* const p_instanc
 	p_dest_pkt->payload.p_retcodes=&p_raw_data[2];
 	p_dest_pkt->payload.retcodes_len=pkt_length-2;
 
-	return YAMC_SUCCESS;
+	return YAMC_RET_SUCCESS;
 }
 
 //decode assembled MQTT packet data and call user defined event handler
-void yamc_decode_pkt(yamc_instance_t* const p_instance)
+static inline void yamc_decode_pkt(yamc_instance_t* const p_instance)
 {
 	YAMC_ASSERT(p_instance!=NULL);
 
@@ -256,7 +270,7 @@ void yamc_decode_pkt(yamc_instance_t* const p_instance)
 	if(!is_parsing_enabled(p_instance, p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type)) return;
 
 
-	yamc_retcode_t decoder_retcode=YAMC_ERROR_CANT_PARSE;
+	yamc_retcode_t decoder_retcode=YAMC_RET_CANT_PARSE;
 	yamc_mqtt_pkt_data_t mqtt_pkt_data;
 
 	memset(&mqtt_pkt_data,0,sizeof(yamc_mqtt_pkt_data_t));
@@ -289,7 +303,7 @@ void yamc_decode_pkt(yamc_instance_t* const p_instance)
 
 	case YAMC_PKT_PINGRESP:
 		//pingresp has no var_data, nothing to parse
-		decoder_retcode=YAMC_SUCCESS;
+		decoder_retcode=YAMC_RET_SUCCESS;
 		break;
 
 	default:
@@ -298,5 +312,10 @@ void yamc_decode_pkt(yamc_instance_t* const p_instance)
 	}
 
 	//if packet was decoded successfully launch user handler
-	if(decoder_retcode==YAMC_SUCCESS) p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data);
+	if(decoder_retcode==YAMC_RET_SUCCESS) p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data);
 }
+
+
+#endif /* ifdef __YAMC_INTERNAL_PKT_DECODER_H__ */
+
+#endif /* ifdef __YAMC_INTERNALS__ */

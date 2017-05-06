@@ -17,7 +17,17 @@
 #include "yamc.h"
 #include "yamc_log.h"
 
-extern void yamc_decode_pkt(yamc_instance_t* const p_instance);
+/**
+ * including what amounts to a .c file may be a bad taste
+ * but allows to reduce stack pressure by statically inlininig yamc_decode_pkt()
+ * and dependencies while keeping 2 separate files
+ *
+ * yamc_internal_pkt_decoder.h is wrapped inside of #ifdef __YAMC_INTERNALS__ to prevent accidental inclusion
+ *
+ */
+#define __YAMC_INTERNALS__
+#include <yamc_internal_pkt_decoder.h>
+#undef __YAMC_INTERNALS__
 
 //start or restart timeout timer
 static inline void timeout_pat(const yamc_instance_t* const p_instance)
@@ -82,11 +92,16 @@ void yamc_init(yamc_instance_t* const p_instance, const yamc_handler_cfg_t* cons
 	YAMC_ASSERT(p_instance!=NULL);
 	YAMC_ASSERT(p_handler_cfg!=NULL);
 
+	//null check of handlers
+	YAMC_ASSERT(p_handler_cfg->pkt_handler!=NULL);
+	YAMC_ASSERT(p_handler_cfg->disconnect!=NULL);
+	YAMC_ASSERT(p_handler_cfg->write!=NULL);
+
+	//timeout handlers are optional and null checked at execution
+
 	memset(p_instance,0, sizeof(yamc_instance_t));
 	memcpy(&p_instance->handlers,p_handler_cfg, sizeof(yamc_handler_cfg_t));
 }
-
-
 
 //parse incoming data buffer
 void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_buff, uint32_t len)
