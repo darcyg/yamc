@@ -1,7 +1,7 @@
 /*
  * YAMC - Yet Another MQTT Client library
  *
- * yamc_buff_parser.c - Assembles incoming MQTT data into complete packet and calls yamc_pkt_decoder.
+ * yamc_parser.c - Assembles incoming MQTT data into complete packet and calls yamc_pkt_decoder.
  *
  * Author: Michal Lower <keton22@gmail.com>
  *
