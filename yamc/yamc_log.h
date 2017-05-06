@@ -19,10 +19,10 @@ const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type);
 #ifdef YAMC_DEBUG
 
 ///debug log macro
-#define YAMC_LOG_DEBUG(...) YAMC_LOG_DEBUG_INTERNAL(__VA_ARGS__)
+#define YAMC_LOG_DEBUG(...) YAMC_DEBUG_PRINTF(__VA_ARGS__)
 
 ///error log macro
-#define YAMC_LOG_ERROR(...) YAMC_LOG_ERROR_INTERNAL(__VA_ARGS__)
+#define YAMC_LOG_ERROR(...) YAMC_ERROR_PRINTF(__VA_ARGS__)
 
 void yamc_log_hex(const uint8_t* const p_buff, const uint32_t buff_len);
 void yamc_log_raw_pkt(const yamc_instance_t* const p_instance);

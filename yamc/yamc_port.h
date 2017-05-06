@@ -11,46 +11,48 @@
 #ifndef __YAMC_PORT_H__
 #define __YAMC_PORT_H__
 
-/**
- *  Buffer size declarations
- */
+/*************************
+ *
+ * Buffer size declaration
+ *
+ *************************/
 
 ///Payload buffer length, any payload longer than this will not be processed
 #define YAMC_RX_PKT_MAX_LEN 1024
 
 
-/**
+/*************************
+ *
  * Debug macros
- */
-
-#ifdef YAMC_DEBUG
+ *
+ *************************/
 
 #include <stdio.h>
 
-///debug log macro
-#define YAMC_LOG_DEBUG_INTERNAL(...) do \
+///print string to debug output (i.e. stdout)
+#define YAMC_DEBUG_PRINTF(...) do \
 	{ \
 	printf(__VA_ARGS__); \
 	fflush(stdout); \
 	} while(0)
 
-///error log macro
-#define YAMC_LOG_ERROR_INTERNAL(...) fprintf(stderr, __VA_ARGS__)
+///print string to error output (i.e. stderr)
+#define YAMC_ERROR_PRINTF(...) fprintf(stderr, __VA_ARGS__)
 
-#else
-#define YAMC_LOG_DEBUG_INTERNAL(...)
-#define YAMC_LOG_ERROR_INTERNAL(...)
-#endif
 
-/**
- * Unused parameter macro
- */
-#define YAMC_UNUSED_PARAMETER(x) (void) x
-
-/**
+/*************************
+ *
  * Assert mechanism
- */
+ *
+ *************************/
 #include <assert.h>
 #define YAMC_ASSERT(...) assert(__VA_ARGS__)
+
+/**************************
+ *
+ * Unused parameter macro
+ *
+ **************************/
+#define YAMC_UNUSED_PARAMETER(x) (void) x
 
 #endif

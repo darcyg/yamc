@@ -17,9 +17,7 @@
 #include "yamc.h"
 #include "yamc_log.h"
 
-#ifdef YAMC_DEBUG
-
-const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
+inline const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
 {
 	switch(pkt_type)
 	{
@@ -70,6 +68,9 @@ const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
 	}
 }
 
+//functions below are used only in debug mode
+#ifdef YAMC_DEBUG
+
 void yamc_log_hex(const uint8_t* const p_buff, const uint32_t buff_len)
 {
 	YAMC_ASSERT(p_buff!=NULL);
@@ -90,5 +91,5 @@ void yamc_log_raw_pkt(const yamc_instance_t* const p_instance)
 	yamc_log_hex(p_instance->rx_pkt.var_data.data, p_instance->rx_pkt.var_data.pos);
 }
 
-#endif
+#endif /* ifdef YAMC_DEBUG */
 
