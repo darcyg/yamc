@@ -18,11 +18,10 @@
 ///yamc return codes
 typedef enum
 {
-	YAMC_SUCCESS=0,
-	YAMC_ERROR_INVALID_DATA,
-	YAMC_ERROR_INVALID_STATE,
-	YAMC_ERROR_NULL,
-	YAMC_ERROR_CANT_PARSE,
+	YAMC_RET_SUCCESS=0,		///Success
+	YAMC_RET_INVALID_DATA,	///Data format error
+	YAMC_RET_INVALID_STATE,	///Invalid state
+	YAMC_RET_CANT_PARSE,	///Parser error
 
 } yamc_retcode_t;
 
@@ -141,10 +140,10 @@ typedef struct yamc_instance_s
 
 } yamc_instance_t;
 
-//parse incoming data buffer
-void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_buff, uint32_t len);
-
 ///Initialize yamc instance
 void yamc_init(yamc_instance_t* const p_instance, const yamc_handler_cfg_t* const p_handler_cfg);
+
+//parse incoming data buffer
+void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_buff, uint32_t len);
 
 #endif /* YAMC_H_ */
