@@ -1,2 +1,5 @@
-eclipse/[Dd]ebug*/
-eclipse/[Rr]elease*/
+*.o
+*.exe
+yamc_socket
+yamc_stdin
+*.a

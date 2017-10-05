@@ -1,0 +1,51 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Launch yamc_socket",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "${workspaceRoot}/yamc_socket",
+                "args": [
+                    "test.mosquitto.org",
+                    "1883"
+                ],
+                "stopAtEntry": true,
+                "cwd": "${workspaceRoot}",
+                "environment": [],
+                "externalConsole": true,
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ],
+                "preLaunchTask": "make"
+            },
+            {
+                "name": "Launch yamc_stdin",
+                "type": "cppdbg",
+                "request": "launch",
+                "program": "${workspaceRoot}/yamc_stdin",
+                "args": [
+                    "test.mosquitto.org",
+                    "1883"
+                ],
+                "stopAtEntry": true,
+                "cwd": "${workspaceRoot}",
+                "environment": [],
+                "externalConsole": true,
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ],
+                "preLaunchTask": "make"
+            }
+        ]
+    }
