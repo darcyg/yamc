@@ -192,7 +192,7 @@ static void setup_socket(int* p_socket, char *hostname, int portno)
 	serv_addr.sin_family = AF_INET;
 
 	//copy connection IP address
-	memcpy(server->h_addr, &serv_addr.sin_addr.s_addr, server->h_length);
+	memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
 
 	//set connection port, convert number format to network byte order
 	serv_addr.sin_port = htons(portno);
