@@ -12,16 +12,17 @@
 #ifndef __YAMC_LOG_H__
 #define __YAMC_LOG_H__
 
+#include "yamc_mqtt.h"
 #include "yamc_port.h"
 
 const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type);
 
 #ifdef YAMC_DEBUG
 
-///debug log macro
+/// debug log macro
 #define YAMC_LOG_DEBUG(...) YAMC_DEBUG_PRINTF(__VA_ARGS__)
 
-///error log macro
+/// error log macro
 #define YAMC_LOG_ERROR(...) YAMC_ERROR_PRINTF(__VA_ARGS__)
 
 void yamc_log_hex(const uint8_t* const p_buff, const uint32_t buff_len);

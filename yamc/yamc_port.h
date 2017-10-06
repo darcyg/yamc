@@ -17,9 +17,8 @@
  *
  *************************/
 
-///Payload buffer length, any payload longer than this will not be processed
+/// Payload buffer length, any payload longer than this will not be processed
 #define YAMC_RX_PKT_MAX_LEN 1024
-
 
 /*************************
  *
@@ -29,16 +28,16 @@
 
 #include <stdio.h>
 
-///print string to debug output (i.e. stdout)
-#define YAMC_DEBUG_PRINTF(...) do \
-	{ \
-	printf(__VA_ARGS__); \
-	fflush(stdout); \
-	} while(0)
+/// print string to debug output (i.e. stdout)
+#define YAMC_DEBUG_PRINTF(...) \
+	do                         \
+	{                          \
+		printf(__VA_ARGS__);   \
+		fflush(stdout);        \
+	} while (0)
 
-///print string to error output (i.e. stderr)
+/// print string to error output (i.e. stderr)
 #define YAMC_ERROR_PRINTF(...) fprintf(stderr, __VA_ARGS__)
-
 
 /*************************
  *
@@ -53,6 +52,6 @@
  * Unused parameter macro
  *
  **************************/
-#define YAMC_UNUSED_PARAMETER(x) (void) x
+#define YAMC_UNUSED_PARAMETER(x) (void)x
 
 #endif
