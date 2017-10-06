@@ -1,7 +1,23 @@
+DEBUG_PRINT?=0
+RELEASE?=0
 PROJ_DIR:=.
 YAMC_FILES=$(wildcard $(PROJ_DIR)/yamc/*.c)
-CFLAGS:=-std=gnu11 -Og -ggdb -Wall -Wextra -Wpedantic -DYAMC_DEBUG=1 -I$(PROJ_DIR)/yamc -I$(PROJ_DIR)/wrappers
+CFLAGS:=-std=gnu11 -Wall -Wextra -Wpedantic -I$(PROJ_DIR)/yamc -I$(PROJ_DIR)/wrappers
 LDFLAGS:=-lrt -lpthread -lyamc -L.
+
+CFLAGS_DEBUG:=-Og -ggdb
+CFLAGS_RELEASE:=-O3
+CFLAGS_DEBUG_PRINT:=-DYAMC_DEBUG=1
+
+ifeq ($(RELEASE),0)
+	CFLAGS+=$(CFLAGS_DEBUG)
+else
+	CFLAGS+=$(CFLAGS_RELEASE)
+endif
+
+ifeq ($(DEBUG_PRINT),1)
+	CFLAGS+=$(CFLAGS_DEBUG_PRINT)
+endif
 
 all: libyamc.a yamc_socket yamc_stdin
 
