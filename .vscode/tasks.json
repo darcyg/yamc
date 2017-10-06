@@ -25,12 +25,24 @@
                     "severity": 4,
                     "message": 5
                 }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "dedicated"
             }
         },
         {
             "taskName": "make clean",
             "type": "shell",
-            "command": "make clean"
+            "command": "make clean",
+            "presentation": {
+                "echo": true,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared"
+            }
         }
     ]
 }
