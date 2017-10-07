@@ -20,11 +20,6 @@
 #ifndef __YAMC_INTERNAL_PKT_DECODER_H__
 #define __YAMC_INTERNAL_PKT_DECODER_H__
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "yamc.h"
 #include "yamc_log.h"
 

@@ -9,13 +9,8 @@
  *
  */
 
-#include "yamc_log.h"
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "yamc.h"
+#include "yamc_log.h"
 
 inline const char* yamc_mqtt_pkt_type_to_str(yamc_pkt_type_t pkt_type)
 {
