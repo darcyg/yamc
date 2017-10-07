@@ -208,6 +208,41 @@ static void setup_socket(int* p_socket, char* hostname, int portno)
 	}
 }
 
+//handle shutdown (i.e. Ctrl+C) in graceful fashion
+static void sigint_handler(int signal)
+{
+	YAMC_UNUSED_PARAMETER(signal);
+
+	// send MQTT disconnect packet
+	yamc_mqtt_pkt_data_t disconnect_pkt;
+	memset(&disconnect_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	disconnect_pkt.pkt_type = YAMC_PKT_DISCONNECT;
+
+	yamc_retcode_t ret = yamc_send_pkt(&yamc_instance, &disconnect_pkt);
+	if (ret != YAMC_RET_SUCCESS)
+	{
+		printf("Error sending disconnect packet: %u\n", ret);
+		exit(-1);
+	}
+
+	//signal that we should go now...
+	exit_now = true;
+}
+
+//setup signal handler for Crtl+C
+static void setup_sigint_handler(void)
+{
+	struct sigaction sigint_action;
+	memset(&sigint_action, 0, sizeof(struct sigaction));
+	sigint_action.sa_handler = sigint_handler;
+	sigemptyset(&sigint_action.sa_mask);
+	sigint_action.sa_flags = 0;
+	sigaction(SIGINT, &sigint_action, NULL);
+	sigaction(SIGHUP, &sigint_action, NULL);
+	sigaction(SIGTERM, &sigint_action, NULL);
+}
+
 int main(int argc, char* argv[])
 {
 	int portno;
@@ -225,6 +260,9 @@ int main(int argc, char* argv[])
 
 	// setup socket and connect to server
 	setup_socket(&server_socket, argv[1], portno);
+
+	//setup disconnect on signal
+	setup_sigint_handler();
 
 	// Create receive data thread
 	YAMC_DEBUG_PRINTF("Connected launching rx thread...\n");
@@ -257,7 +295,7 @@ int main(int argc, char* argv[])
 	memset(&connect_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
 
 	// basic configuration
-	char client_id[] = "yamc_test";
+	char client_id[] = "test_clinet_id";
 
 	connect_pkt.pkt_type										   = YAMC_PKT_CONNECT;
 	connect_pkt.pkt_data.connect.client_id.str					   = (uint8_t*)client_id;
@@ -357,23 +395,56 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
+	// unsubscribe topic 'test/#'
+	/*
+	yamc_mqtt_pkt_data_t unsubscribe_pkt;
+	memset(&unsubscribe_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	yamc_mqtt_string unsubscribe_topics[2];
+	memset(subscribe_topics, 0, sizeof(subscribe_topics));
+
+	char unsub_topic1[] = "test/#";
+	char unsub_topic2[] = "yamc_test/#";
+
+	unsubscribe_topics[0].str = (uint8_t*)unsub_topic1;
+	unsubscribe_topics[0].len = strlen(unsub_topic1);
+
+	unsubscribe_topics[1].str = (uint8_t*)unsub_topic2;
+	unsubscribe_topics[1].len = strlen(unsub_topic2);
+
+	unsubscribe_pkt.pkt_type								= YAMC_PKT_UNSUBSCRIBE;
+	unsubscribe_pkt.pkt_data.unsubscribe.pkt_id				= 1339;
+	unsubscribe_pkt.pkt_data.unsubscribe.payload.p_topics   = unsubscribe_topics;
+	unsubscribe_pkt.pkt_data.unsubscribe.payload.topics_len = sizeof(unsubscribe_topics) / sizeof(unsubscribe_topics[0]);
+
+	ret = yamc_send_pkt(&yamc_instance, &unsubscribe_pkt);
+	if (ret != YAMC_RET_SUCCESS)
+	{
+		printf("Error sending unsubscribe packet: %u\n", ret);
+		exit(-1);
+	}
+	*/
+
 	// repeatedly send ping request to keep connection alive
 	while (!exit_now)
 	{
-		uint8_t pingreq_msg[] = {
-			// fixed header only
+		yamc_mqtt_pkt_data_t pingreq_pkt;
+		memset(&pingreq_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
 
-			12 << 4,  // packet type
-			0		  // remaining length
+		pingreq_pkt.pkt_type = YAMC_PKT_PINGREQ;
 
-		};
-
-		socket_write_buff(pingreq_msg, sizeof(pingreq_msg));
+		ret = yamc_send_pkt(&yamc_instance, &pingreq_pkt);
+		if (ret != YAMC_RET_SUCCESS)
+		{
+			printf("Error sending pingreq packet: %u\n", ret);
+			exit(-1);
+		}
 
 		sleep(25);
 	}
 
 	// cleanup
 	close(server_socket);
-	exit(0);
+
+	return 0;
 }
