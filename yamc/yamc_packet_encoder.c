@@ -337,6 +337,81 @@ static inline yamc_retcode_t yamc_send_subscribe(yamc_instance_t* const p_instan
 	return YAMC_RET_SUCCESS;
 }
 
+static inline yamc_retcode_t yamc_send_unsubscribe(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
+{
+	YAMC_ASSERT(p_instance != NULL);
+	YAMC_ASSERT(p_pkt_data != NULL);
+
+	yamc_mqtt_hdr_fixed_t fixed_hdr;
+	memset(&fixed_hdr, 0, sizeof(yamc_mqtt_hdr_fixed_t));
+
+	// unsubscribe packet header has specific format
+	fixed_hdr.pkt_type.raw = YAMC_PKT_UNSUBSCRIBE << 4 | 2;
+
+	/*
+	 *
+	 * mandatory fields:
+	 *
+	 * Packet identifier: 2 bytes
+	*/
+	uint32_t rem_len = 2;
+
+	if (p_pkt_data->pkt_data.unsubscribe.payload.topics_len == 0 || p_pkt_data->pkt_data.unsubscribe.payload.p_topics == NULL)
+		return YAMC_RET_INVALID_DATA;
+
+	for (uint16_t i = 0; i < p_pkt_data->pkt_data.unsubscribe.payload.topics_len; i++)
+	{
+		uint16_t topic_len = yamc_mqtt_string_raw_length(&p_pkt_data->pkt_data.unsubscribe.payload.p_topics[i]);
+
+		// zero length subscription topic is illegal
+		if (!topic_len) return YAMC_RET_INVALID_DATA;
+
+		//+1 because each topic has corresponding qos byte
+		rem_len += topic_len;
+	}
+
+	// encode remaining length in packet header
+	yamc_encode_rem_length(rem_len, &fixed_hdr);
+
+	// send the data
+
+	// send fixed header
+	yamc_retcode_t ret = yamc_send_fixed_hdr(p_instance, &fixed_hdr);
+	if (ret != YAMC_RET_SUCCESS) return ret;
+
+	ret = yamc_send_word(p_instance, p_pkt_data->pkt_data.unsubscribe.pkt_id);
+	if (ret != YAMC_RET_SUCCESS) return ret;
+
+	for (uint16_t i = 0; i < p_pkt_data->pkt_data.unsubscribe.payload.topics_len; i++)
+	{
+		ret = yamc_send_str(p_instance, &p_pkt_data->pkt_data.unsubscribe.payload.p_topics[i]);
+		if (ret != YAMC_RET_SUCCESS) return ret;
+	}
+
+	return YAMC_RET_SUCCESS;
+}
+
+//send packet that contains only fixed header (disconnect, pingreq, pingresp...)
+static inline yamc_retcode_t yamc_send_fixed_hdr_only_pkt(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
+{
+	YAMC_ASSERT(p_instance != NULL);
+	YAMC_ASSERT(p_pkt_data != NULL);
+
+	yamc_mqtt_hdr_fixed_t fixed_hdr;
+	memset(&fixed_hdr, 0, sizeof(yamc_mqtt_hdr_fixed_t));
+
+	fixed_hdr.pkt_type.raw = p_pkt_data->pkt_type << 4;
+
+	//disconnect packet has no data in it
+	uint32_t rem_len = 0;
+
+	// encode remaining length in packet header
+	yamc_encode_rem_length(rem_len, &fixed_hdr);
+
+	// send the data
+	return yamc_send_fixed_hdr(p_instance, &fixed_hdr);
+}
+
 // encode and send packet
 yamc_retcode_t yamc_send_pkt(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
 {
@@ -354,10 +429,14 @@ yamc_retcode_t yamc_send_pkt(yamc_instance_t* const p_instance, yamc_mqtt_pkt_da
 		case YAMC_PKT_SUBSCRIBE:
 			return yamc_send_subscribe(p_instance, p_pkt_data);
 
-		case YAMC_PKT_DISCONNECT:
-		case YAMC_PKT_UNSUBSCRIBE:
+		//handle 'fixed header only' packets, fall through is intentional!
 		case YAMC_PKT_PINGREQ:
-		case YAMC_PKT_PINGRESP:
+		case YAMC_PKT_DISCONNECT:
+			return yamc_send_fixed_hdr_only_pkt(p_instance, p_pkt_data);
+
+		case YAMC_PKT_UNSUBSCRIBE:
+			return yamc_send_unsubscribe(p_instance, p_pkt_data);
+
 		case YAMC_PKT_PUBACK:
 		case YAMC_PKT_PUBREL:
 		case YAMC_PKT_PUBREC:

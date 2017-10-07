@@ -69,6 +69,7 @@ typedef struct
 		yamc_mqtt_pkt_pubrel_t	pubrel;
 		yamc_mqtt_pkt_pubcomp_t   pubcomp;
 		yamc_mqtt_pkt_subscribe_t subscribe;
+		yamc_mqtt_pkt_unsubscribe_t unsubscribe;
 		yamc_mqtt_pkt_suback_t	suback;
 		yamc_mqtt_pkt_unsuback_t  unsuback;
 

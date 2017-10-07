@@ -273,6 +273,23 @@ typedef struct
 
 } yamc_mqtt_pkt_subscribe_t;
 
+/// MQTT UNSUBSCRIBE packet var_data
+typedef struct
+{
+	// variable header
+
+	uint16_t pkt_id;  ///< packet identifier
+
+	// payload
+	struct
+	{
+		yamc_mqtt_string* p_topics;	  ///< Topic name array
+		uint16_t		  topics_len;  ///< length of topics array
+
+	} payload;
+
+} yamc_mqtt_pkt_unsubscribe_t;
+
 /// SUBACK return code values
 typedef enum {
 	YAMC_SUBACK_SUCC_QOS0 = 0,  ///< Success - Maximum QoS 0
