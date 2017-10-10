@@ -30,10 +30,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "/usr/include/x86_64-linux-gnu/c++/6",
-                "/usr/include/c++/6",
+                "/usr/lib/gcc/x86_64-linux-gnu/6/include/",
                 "/usr/local/include",
-                "/usr/lib/clang/4.0.0/include",
                 "/usr/include/x86_64-linux-gnu",
                 "/usr/include",
                 "${workspaceRoot}",
@@ -47,10 +45,8 @@
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
-                    "/usr/include/x86_64-linux-gnu/c++/6",
-                    "/usr/include/c++/6",
+                    "/usr/lib/gcc/x86_64-linux-gnu/6/include/",
                     "/usr/local/include",
-                    "/usr/lib/clang/4.0.0/include",
                     "/usr/include/x86_64-linux-gnu",
                     "/usr/include",
                     "${workspaceRoot}"
