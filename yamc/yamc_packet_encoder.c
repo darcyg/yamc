@@ -412,6 +412,63 @@ static inline yamc_retcode_t yamc_send_fixed_hdr_only_pkt(yamc_instance_t* const
 	return yamc_send_fixed_hdr(p_instance, &fixed_hdr);
 }
 
+static inline yamc_retcode_t yamc_send_pub_x(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
+{
+	YAMC_ASSERT(p_instance != NULL);
+	YAMC_ASSERT(p_pkt_data != NULL);
+
+	yamc_mqtt_hdr_fixed_t fixed_hdr;
+	memset(&fixed_hdr, 0, sizeof(yamc_mqtt_hdr_fixed_t));
+
+	fixed_hdr.pkt_type.raw = p_pkt_data->pkt_type << 4;
+
+	/*
+	 *
+	 * mandatory fields:
+	 *
+	 * Packet identifier: 2 bytes
+	*/
+	uint32_t rem_len = 2;
+
+	// encode remaining length in packet header
+	yamc_encode_rem_length(rem_len, &fixed_hdr);
+
+	// send the data
+
+	// send fixed header
+	yamc_retcode_t ret = yamc_send_fixed_hdr(p_instance, &fixed_hdr);
+	if (ret != YAMC_RET_SUCCESS) return ret;
+
+	uint16_t* p_pkt_id=NULL;
+
+	switch (p_pkt_data->pkt_type)
+	{
+		case YAMC_PKT_PUBACK:
+			p_pkt_id = &p_pkt_data->pkt_data.puback.packet_id;
+			break;
+
+		case YAMC_PKT_PUBREL:
+			p_pkt_id = &p_pkt_data->pkt_data.pubrel.packet_id;
+			break;
+
+		case YAMC_PKT_PUBREC:
+			p_pkt_id = &p_pkt_data->pkt_data.pubrec.packet_id;
+			break;
+
+		case YAMC_PKT_PUBCOMP:
+			p_pkt_id = &p_pkt_data->pkt_data.pubcomp.packet_id;
+			break;
+
+		default:
+			return YAMC_RET_INVALID_DATA;
+	}
+
+	ret = yamc_send_word(p_instance, *p_pkt_id);
+	if (ret != YAMC_RET_SUCCESS) return ret;
+
+	return YAMC_RET_SUCCESS;
+}
+
 // encode and send packet
 yamc_retcode_t yamc_send_pkt(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
 {
@@ -440,8 +497,8 @@ yamc_retcode_t yamc_send_pkt(yamc_instance_t* const p_instance, yamc_mqtt_pkt_da
 		case YAMC_PKT_PUBACK:
 		case YAMC_PKT_PUBREL:
 		case YAMC_PKT_PUBREC:
-			YAMC_ERROR_PRINTF("Not implemented yet: %s\n", yamc_mqtt_pkt_type_to_str(p_pkt_data->pkt_type));
-			return YAMC_RET_CANT_PARSE;
+		case YAMC_PKT_PUBCOMP:
+			return yamc_send_pub_x(p_instance, p_pkt_data);
 
 		default:
 			YAMC_ERROR_PRINTF("Unsupported packet type: %s\n", yamc_mqtt_pkt_type_to_str(p_pkt_data->pkt_type));
