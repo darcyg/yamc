@@ -62,51 +62,15 @@ int main(int argc, char* argv[])
 	// process sending data to socket here...
 
 	// send MQTT connect packet
-	yamc_mqtt_pkt_data_t connect_pkt;
-	memset(&connect_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+	yamc_retcode_t		ret;
+	yamc_connect_data_t connect_data;
 
-	// basic configuration
-	char client_id[] = "test_clinet_id";
+	memset(&connect_data, 0, sizeof(yamc_connect_data_t));
 
-	connect_pkt.pkt_type										   = YAMC_PKT_CONNECT;
-	connect_pkt.pkt_data.connect.client_id.str					   = (uint8_t*)client_id;
-	connect_pkt.pkt_data.connect.client_id.len					   = strlen(client_id);
-	connect_pkt.pkt_data.connect.connect_flags.flags.clean_session = 1;
-	connect_pkt.pkt_data.connect.keepalive_timeout_s			   = 60;
+	connect_data.clean_session		 = true;
+	connect_data.keepalive_timeout_s = 30;
 
-	/*
-	//client authentication
-	char user_name[]="user";
-	char password[]="password";
-
-	connect_pkt.pkt_data.connect.connect_flags.flags.username_flag=1;
-	connect_pkt.pkt_data.connect.connect_flags.flags.password_flag=1;
-
-	connect_pkt.pkt_data.connect.user_name.str=(uint8_t*)user_name;
-	connect_pkt.pkt_data.connect.user_name.len=strlen(user_name);
-
-	connect_pkt.pkt_data.connect.password.str=(uint8_t*)password;
-	connect_pkt.pkt_data.connect.password.len=strlen(password);
-	*/
-
-	/*
-	//will message and topic configuration
-
-	char will_topic[]="will/yamc";
-	char will_message[]="Goodbye cruel world!";
-
-	connect_pkt.pkt_data.connect.connect_flags.flags.will_flag=1;
-	connect_pkt.pkt_data.connect.connect_flags.flags.will_remain=0;
-	connect_pkt.pkt_data.connect.connect_flags.flags.will_qos=0;
-
-	connect_pkt.pkt_data.connect.will_topic.str=(uint8_t*)will_topic;
-	connect_pkt.pkt_data.connect.will_topic.len=strlen(will_topic);
-
-	connect_pkt.pkt_data.connect.will_message.str=(uint8_t*)will_message;
-	connect_pkt.pkt_data.connect.will_message.len=strlen(will_message);
-	*/
-
-	yamc_retcode_t ret = yamc_send_pkt(&yamc_net_core.instance, &connect_pkt);
+	ret = yamc_connect(&yamc_net_core.instance, &connect_data);
 	if (ret != YAMC_RET_SUCCESS)
 	{
 		printf("Error sending connect packet: %u\n", ret);
@@ -114,22 +78,14 @@ int main(int argc, char* argv[])
 	}
 
 	// send MQTT publish packet
-	yamc_mqtt_pkt_data_t publish_pkt;
-	memset(&publish_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+	yamc_publish_data_t publish_data;
+	memset(&publish_data, 0, sizeof(yamc_publish_data_t));
 
-	char topic_name[] = "test/hello";
-	char payload[]	= "Hello World!";
+	publish_data.QOS=YAMC_QOS_LVL1;
+	yamc_char_to_mqtt_str("test/hello", &publish_data.topic);
+	yamc_publish_set_char_payload("Hello world!", &publish_data);
 
-	publish_pkt.pkt_type						= YAMC_PKT_PUBLISH;
-	publish_pkt.flags.QOS						= 1;
-	publish_pkt.pkt_data.publish.packet_id		= 1337;
-	publish_pkt.pkt_data.publish.topic_name.str = (uint8_t*)topic_name;
-	publish_pkt.pkt_data.publish.topic_name.len = strlen(topic_name);
-
-	publish_pkt.pkt_data.publish.payload.p_data   = (uint8_t*)payload;
-	publish_pkt.pkt_data.publish.payload.data_len = strlen(payload);
-
-	ret = yamc_send_pkt(&yamc_net_core.instance, &publish_pkt);
+	ret = yamc_publish(&yamc_net_core.instance, &publish_data);
 	if (ret != YAMC_RET_SUCCESS)
 	{
 		printf("Error sending publish packet: %u\n", ret);
@@ -165,7 +121,7 @@ int main(int argc, char* argv[])
 		printf("Error sending subscribe packet: %u\n", ret);
 		exit(-1);
 	}
-	
+
 	//unsubscribe topic 'test/#'
 	/*
 	yamc_mqtt_pkt_data_t unsubscribe_pkt;

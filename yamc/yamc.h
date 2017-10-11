@@ -13,6 +13,7 @@
 #define __YAMC_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "yamc_mqtt.h"
 
 /// yamc return codes
@@ -61,27 +62,54 @@ typedef struct
 
 	/// Packet var_data
 	union {
-		yamc_mqtt_pkt_connect_t   connect;
-		yamc_mqtt_pkt_connack_t   connack;
-		yamc_mqtt_pkt_publish_t   publish;
-		yamc_mqtt_pkt_puback_t	puback;
-		yamc_mqtt_pkt_pubrec_t	pubrec;
-		yamc_mqtt_pkt_pubrel_t	pubrel;
-		yamc_mqtt_pkt_pubcomp_t   pubcomp;
-		yamc_mqtt_pkt_subscribe_t subscribe;
+		yamc_mqtt_pkt_connect_t		connect;
+		yamc_mqtt_pkt_connack_t		connack;
+		yamc_mqtt_pkt_publish_t		publish;
+		yamc_mqtt_pkt_puback_t		puback;
+		yamc_mqtt_pkt_pubrec_t		pubrec;
+		yamc_mqtt_pkt_pubrel_t		pubrel;
+		yamc_mqtt_pkt_pubcomp_t		pubcomp;
+		yamc_mqtt_pkt_subscribe_t   subscribe;
 		yamc_mqtt_pkt_unsubscribe_t unsubscribe;
-		yamc_mqtt_pkt_suback_t	suback;
-		yamc_mqtt_pkt_unsuback_t  unsuback;
+		yamc_mqtt_pkt_suback_t		suback;
+		yamc_mqtt_pkt_unsuback_t	unsuback;
 
 	} pkt_data;
 
 } yamc_mqtt_pkt_data_t;
 
+///Outgoing CONNECT packet definition
+typedef struct
+{
+	bool			 clean_session;		   ///< Clean session flag
+	yamc_qos_lvl_t   will_qos;			   ///< Will QoS value
+	bool			 will_remain;		   ///< Will remain flag
+	uint16_t		 keepalive_timeout_s;  ///< keepalive value in seconds
+	yamc_mqtt_string client_id;			   ///< client identifier
+	yamc_mqtt_string will_topic;		   ///< (optional) will topic
+	yamc_mqtt_string will_message;		   ///< (optional) will message
+	yamc_mqtt_string user_name;			   ///< (optional) user name
+	yamc_mqtt_string password;			   ///< (optional) password
+
+} yamc_connect_data_t;
+
+///Outgoing PUBLISH packet definition
+typedef struct 
+{
+	yamc_mqtt_string topic;			///< publish topic
+	yamc_qos_lvl_t QOS;				///< QoS level
+	bool DUP;						///< packet DUP flag
+	bool RETAIN;					///< packet RETAIN flag
+	const uint8_t* p_data;			///< payload data
+	uint32_t data_len;				///< payload data length
+
+} yamc_publish_data_t;
+
 /// yamc instance forward declaration
 struct yamc_instance_s;
 
 /// Socket write handler
-typedef yamc_retcode_t (*yamc_write_handler_t)(void* p_ctx, uint8_t* p_buff, uint32_t buff_len);
+typedef yamc_retcode_t (*yamc_write_handler_t)(void* p_ctx, const uint8_t* const p_buff, uint32_t buff_len);
 
 /// Disconnection request handler - signal main application that we should disconnect form server
 typedef void (*yamc_disconnect_handler_t)(void* p_ctx);
@@ -107,21 +135,22 @@ typedef enum {
 
 typedef struct
 {
-	yamc_disconnect_handler_t   disconnect;	///< Server disconnection handler
-	yamc_write_handler_t		write;		   ///< Write data to server handler
-	yamc_timeout_pat_handler_t  timeout_pat;   ///< start/restart timeout timer handler
-	yamc_timeout_stop_handler_t timeout_stop;  ///< stop timeout timer handler
-	yamc_pkt_handler_t			pkt_handler;   ///< New packet handler
-	void* 						p_handler_ctx; ///< handler context, can be null
+	yamc_disconnect_handler_t   disconnect;		///< Server disconnection handler
+	yamc_write_handler_t		write;			///< Write data to server handler
+	yamc_timeout_pat_handler_t  timeout_pat;	///< start/restart timeout timer handler
+	yamc_timeout_stop_handler_t timeout_stop;   ///< stop timeout timer handler
+	yamc_pkt_handler_t			pkt_handler;	///< New packet handler
+	void*						p_handler_ctx;  ///< handler context, can be null
 
 } yamc_handler_cfg_t;
 
 /// yamc instance struct
 typedef struct yamc_instance_s
 {
-	yamc_handler_cfg_t  handlers;	  ///< event handlers
-	yamc_mqtt_pkt_t		rx_pkt;		   ///< Incoming packet buffer
-	yamc_parser_state_t parser_state;  ///< Incoming packet parser state
+	yamc_handler_cfg_t  handlers;		 ///< event handlers
+	yamc_mqtt_pkt_t		rx_pkt;			 ///< Incoming packet buffer
+	yamc_parser_state_t parser_state;	///< Incoming packet parser state
+	uint16_t			last_packet_id;  ///< id of last packet sent to server
 
 	/// Enable parsing of given packet type
 	struct
@@ -142,10 +171,23 @@ typedef struct yamc_instance_s
 /// Initialize yamc instance
 void yamc_init(yamc_instance_t* const p_instance, const yamc_handler_cfg_t* const p_handler_cfg);
 
-// parse incoming data buffer
+/// parse incoming data buffer
 void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_buff, uint32_t len);
 
-// encode and send packet
-yamc_retcode_t yamc_send_pkt(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data);
+/// encode and send packet
+yamc_retcode_t yamc_send_pkt(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data);
+
+///assign c string to yamc_mqtt_string object
+void yamc_char_to_mqtt_str(const char* const p_char, yamc_mqtt_string* const p_str);
+
+///Send CONNECT packet
+yamc_retcode_t yamc_connect(const yamc_instance_t* const p_instance, const yamc_connect_data_t* const p_data);
+
+///Set C string as PUBLISH message payload
+void yamc_publish_set_char_payload(const char* const p_char, yamc_publish_data_t* const p_data);
+
+///Send PUBLISH packet
+yamc_retcode_t yamc_publish(yamc_instance_t* const p_instance, const yamc_publish_data_t* const p_data);
+
 
 #endif /* YAMC_H_ */
