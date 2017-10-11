@@ -51,7 +51,7 @@ typedef enum {
 typedef struct
 {
 	const uint8_t* str;  // variable length UTF-8 string. MQTT strings are NOT \0 terminated!
-	uint16_t len;  // string length
+	uint16_t	   len;  // string length
 } yamc_mqtt_string;
 
 /// Fixed header
@@ -244,15 +244,8 @@ typedef yamc_mqtt_pkt_generic_pubx_t yamc_mqtt_pkt_unsuback_t;
 /// MQTT SUBSCRIBE topic filter/ QoS pair
 typedef struct
 {
-	yamc_mqtt_string topic_name;  ///< Topic name filter
-
-	/// QoS definition
-	struct
-	{
-		yamc_qos_lvl_t lvl : 2;  ///< QoS level
-		const uint8_t  res : 6;  ///< reserved
-
-	} qos;
+	yamc_mqtt_string topic;  ///< Topic name filter
+	yamc_qos_lvl_t   qos;		  ///< QoS level
 
 } yamc_mqtt_pkt_subscribe_topic_t;
 
@@ -266,8 +259,8 @@ typedef struct
 	// payload
 	struct
 	{
-		yamc_mqtt_pkt_subscribe_topic_t* p_topics;	///< array of topic filter definitions
-		uint16_t						 topics_len;  ///< length of topics array
+		const yamc_mqtt_pkt_subscribe_topic_t* p_topics;	///< array of topic filter definitions
+		uint16_t							   topics_len;  ///< length of topics array
 
 	} payload;
 
@@ -283,8 +276,8 @@ typedef struct
 	// payload
 	struct
 	{
-		yamc_mqtt_string* p_topics;	  ///< Topic name array
-		uint16_t		  topics_len;  ///< length of topics array
+		const yamc_mqtt_string* p_topics;	///< Topic name array
+		uint16_t				topics_len;  ///< length of topics array
 
 	} payload;
 

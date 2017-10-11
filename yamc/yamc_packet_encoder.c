@@ -319,7 +319,7 @@ static inline yamc_retcode_t yamc_send_subscribe(const yamc_instance_t* const p_
 
 	for (uint16_t i = 0; i < p_pkt_data->pkt_data.subscribe.payload.topics_len; i++)
 	{
-		uint16_t topic_len = yamc_mqtt_string_raw_length(&p_pkt_data->pkt_data.subscribe.payload.p_topics[i].topic_name);
+		uint16_t topic_len = yamc_mqtt_string_raw_length(&p_pkt_data->pkt_data.subscribe.payload.p_topics[i].topic);
 
 		// zero length subscription topic is illegal
 		if (!topic_len) return YAMC_RET_INVALID_DATA;
@@ -342,7 +342,7 @@ static inline yamc_retcode_t yamc_send_subscribe(const yamc_instance_t* const p_
 
 	for (uint16_t i = 0; i < p_pkt_data->pkt_data.subscribe.payload.topics_len; i++)
 	{
-		ret = yamc_send_str(p_instance, &p_pkt_data->pkt_data.subscribe.payload.p_topics[i].topic_name);
+		ret = yamc_send_str(p_instance, &p_pkt_data->pkt_data.subscribe.payload.p_topics[i].topic);
 		if (ret != YAMC_RET_SUCCESS) return ret;
 
 		ret = yamc_send_buff(p_instance, (uint8_t*)&p_pkt_data->pkt_data.subscribe.payload.p_topics[i].qos, 1);
@@ -449,12 +449,6 @@ static inline yamc_retcode_t yamc_send_pub_x(const yamc_instance_t* const p_inst
 	// encode remaining length in packet header
 	yamc_encode_rem_length(rem_len, &fixed_hdr);
 
-	// send the data
-
-	// send fixed header
-	yamc_retcode_t ret = yamc_send_fixed_hdr(p_instance, &fixed_hdr);
-	if (ret != YAMC_RET_SUCCESS) return ret;
-
 	const uint16_t* p_pkt_id = NULL;
 
 	switch (p_pkt_data->pkt_type)
@@ -465,6 +459,8 @@ static inline yamc_retcode_t yamc_send_pub_x(const yamc_instance_t* const p_inst
 
 		case YAMC_PKT_PUBREL:
 			p_pkt_id = &p_pkt_data->pkt_data.pubrel.packet_id;
+
+			//PUBREL has reserved bit set
 			fixed_hdr.pkt_type.raw |= 2;
 			break;
 
@@ -480,47 +476,14 @@ static inline yamc_retcode_t yamc_send_pub_x(const yamc_instance_t* const p_inst
 			return YAMC_RET_INVALID_DATA;
 	}
 
-	ret = yamc_send_word(p_instance, *p_pkt_id);
+	// send the data
+
+	// send fixed header
+	yamc_retcode_t ret = yamc_send_fixed_hdr(p_instance, &fixed_hdr);
 	if (ret != YAMC_RET_SUCCESS) return ret;
 
-	return YAMC_RET_SUCCESS;
-}
-
-// encode and send packet
-yamc_retcode_t yamc_send_pkt(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
-{
-	YAMC_ASSERT(p_instance != NULL);
-	YAMC_ASSERT(p_pkt_data != NULL);
-
-	switch (p_pkt_data->pkt_type)
-	{
-		case YAMC_PKT_CONNECT:
-			return yamc_send_connect(p_instance, p_pkt_data);
-
-		case YAMC_PKT_PUBLISH:
-			return yamc_send_publish(p_instance, p_pkt_data);
-
-		case YAMC_PKT_SUBSCRIBE:
-			return yamc_send_subscribe(p_instance, p_pkt_data);
-
-		//handle 'fixed header only' packets, fall through is intentional!
-		case YAMC_PKT_PINGREQ:
-		case YAMC_PKT_DISCONNECT:
-			return yamc_send_fixed_hdr_only_pkt(p_instance, p_pkt_data);
-
-		case YAMC_PKT_UNSUBSCRIBE:
-			return yamc_send_unsubscribe(p_instance, p_pkt_data);
-
-		case YAMC_PKT_PUBACK:
-		case YAMC_PKT_PUBREL:
-		case YAMC_PKT_PUBREC:
-		case YAMC_PKT_PUBCOMP:
-			return yamc_send_pub_x(p_instance, p_pkt_data);
-
-		default:
-			YAMC_ERROR_PRINTF("Unsupported packet type: %s\n", yamc_mqtt_pkt_type_to_str(p_pkt_data->pkt_type));
-			return YAMC_RET_CANT_PARSE;
-	}
+	ret = yamc_send_word(p_instance, *p_pkt_id);
+	if (ret != YAMC_RET_SUCCESS) return ret;
 
 	return YAMC_RET_SUCCESS;
 }
@@ -580,7 +543,7 @@ yamc_retcode_t yamc_connect(const yamc_instance_t* const p_instance, const yamc_
 		yamc_mqtt_strcpy(&mqtt_pkt.pkt_data.connect.will_topic, &p_data->will_topic);
 	}
 
-	return yamc_send_pkt(p_instance, &mqtt_pkt);
+	return yamc_send_connect(p_instance, &mqtt_pkt);
 }
 
 ///Set C string as PUBLISH message payload
@@ -589,8 +552,8 @@ inline void yamc_publish_set_char_payload(const char* const p_char, yamc_publish
 	YAMC_ASSERT(p_char != NULL);
 	YAMC_ASSERT(p_data != NULL);
 
-	p_data->p_data=(const uint8_t*)p_char;
-	p_data->data_len=strlen(p_char);
+	p_data->p_data   = (const uint8_t*)p_char;
+	p_data->data_len = strlen(p_char);
 }
 
 ///Send PUBLISH packet
@@ -602,18 +565,142 @@ yamc_retcode_t yamc_publish(yamc_instance_t* const p_instance, const yamc_publis
 	yamc_mqtt_pkt_data_t mqtt_pkt;
 	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
 
-	mqtt_pkt.pkt_type = YAMC_PKT_PUBLISH;
-	mqtt_pkt.flags.DUP=p_data->DUP;
-	mqtt_pkt.flags.RETAIN=p_data->RETAIN;
-	mqtt_pkt.flags.QOS=p_data->QOS;
-	if(p_data->QOS!=YAMC_QOS_LVL0)
+	mqtt_pkt.pkt_type	 = YAMC_PKT_PUBLISH;
+	mqtt_pkt.flags.DUP	= p_data->DUP;
+	mqtt_pkt.flags.RETAIN = p_data->RETAIN;
+	mqtt_pkt.flags.QOS	= p_data->QOS;
+	if (p_data->QOS != YAMC_QOS_LVL0)
 	{
 		p_instance->last_packet_id++;
-		mqtt_pkt.pkt_data.publish.packet_id=p_instance->last_packet_id;
+		mqtt_pkt.pkt_data.publish.packet_id = p_instance->last_packet_id;
 	}
 	yamc_mqtt_strcpy(&mqtt_pkt.pkt_data.publish.topic_name, &p_data->topic);
-	mqtt_pkt.pkt_data.publish.payload.p_data=p_data->p_data;
-	mqtt_pkt.pkt_data.publish.payload.data_len=p_data->data_len;
+	mqtt_pkt.pkt_data.publish.payload.p_data   = p_data->p_data;
+	mqtt_pkt.pkt_data.publish.payload.data_len = p_data->data_len;
 
-	return yamc_send_pkt(p_instance, &mqtt_pkt);
+	return yamc_send_publish(p_instance, &mqtt_pkt);
+}
+
+///Send SUBSCRIBE packet
+yamc_retcode_t yamc_subscribe(yamc_instance_t* const p_instance, const yamc_subscribe_data_t* const p_data, uint16_t data_len)
+{
+	YAMC_ASSERT(p_instance != NULL);
+	YAMC_ASSERT(p_data != NULL);
+
+	if (!data_len) return YAMC_RET_INVALID_DATA;
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type = YAMC_PKT_SUBSCRIBE;
+
+	p_instance->last_packet_id++;
+	mqtt_pkt.pkt_data.subscribe.pkt_id = p_instance->last_packet_id;
+
+	mqtt_pkt.pkt_data.subscribe.payload.p_topics   = p_data;
+	mqtt_pkt.pkt_data.subscribe.payload.topics_len = data_len;
+
+	return yamc_send_subscribe(p_instance, &mqtt_pkt);
+}
+
+//Send UNSUBSCRIBE packet
+yamc_retcode_t yamc_unsubscribe(yamc_instance_t* const p_instance, const yamc_mqtt_string* const p_topics, uint16_t topics_len)
+{
+	YAMC_ASSERT(p_instance != NULL);
+	YAMC_ASSERT(p_topics != NULL);
+
+	if (!topics_len) return YAMC_RET_INVALID_DATA;
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type = YAMC_PKT_UNSUBSCRIBE;
+
+	p_instance->last_packet_id++;
+	mqtt_pkt.pkt_data.unsubscribe.pkt_id = p_instance->last_packet_id;
+
+	mqtt_pkt.pkt_data.unsubscribe.payload.p_topics   = p_topics;
+	mqtt_pkt.pkt_data.unsubscribe.payload.topics_len = topics_len;
+
+	return yamc_send_unsubscribe(p_instance, &mqtt_pkt);
+}
+
+//Send PINGREQ packet
+yamc_retcode_t yamc_ping(const yamc_instance_t* const p_instance)
+{
+	YAMC_ASSERT(p_instance != NULL);
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type = YAMC_PKT_PINGREQ;
+	return yamc_send_fixed_hdr_only_pkt(p_instance, &mqtt_pkt);
+}
+
+///Send DISCONNECT packet
+yamc_retcode_t yamc_disconnect(const yamc_instance_t* const p_instance)
+{
+	YAMC_ASSERT(p_instance != NULL);
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type = YAMC_PKT_DISCONNECT;
+	return yamc_send_fixed_hdr_only_pkt(p_instance, &mqtt_pkt);
+}
+
+///Send PUBACK packet
+yamc_retcode_t yamc_puback(const yamc_instance_t* const p_instance, uint16_t packet_id)
+{
+	YAMC_ASSERT(p_instance != NULL);
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type				   = YAMC_PKT_PUBACK;
+	mqtt_pkt.pkt_data.puback.packet_id = packet_id;
+
+	return yamc_send_pub_x(p_instance, &mqtt_pkt);
+}
+
+///Send PUBREL packet
+yamc_retcode_t yamc_pubrel(const yamc_instance_t* const p_instance, uint16_t packet_id)
+{
+	YAMC_ASSERT(p_instance != NULL);
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type				   = YAMC_PKT_PUBREL;
+	mqtt_pkt.pkt_data.pubrel.packet_id = packet_id;
+
+	return yamc_send_pub_x(p_instance, &mqtt_pkt);
+}
+
+///Send PUBREC packet
+yamc_retcode_t yamc_pubrec(const yamc_instance_t* const p_instance, uint16_t packet_id)
+{
+	YAMC_ASSERT(p_instance != NULL);
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type				   = YAMC_PKT_PUBREC;
+	mqtt_pkt.pkt_data.pubrec.packet_id = packet_id;
+
+	return yamc_send_pub_x(p_instance, &mqtt_pkt);
+}
+
+///Send PUBCOMP packet
+yamc_retcode_t yamc_pubcomp(const yamc_instance_t* const p_instance, uint16_t packet_id)
+{
+	YAMC_ASSERT(p_instance != NULL);
+
+	yamc_mqtt_pkt_data_t mqtt_pkt;
+	memset(&mqtt_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
+
+	mqtt_pkt.pkt_type					= YAMC_PKT_PUBCOMP;
+	mqtt_pkt.pkt_data.pubcomp.packet_id = packet_id;
+
+	return yamc_send_pub_x(p_instance, &mqtt_pkt);
 }

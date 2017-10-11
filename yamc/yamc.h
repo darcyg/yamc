@@ -94,16 +94,19 @@ typedef struct
 } yamc_connect_data_t;
 
 ///Outgoing PUBLISH packet definition
-typedef struct 
+typedef struct
 {
-	yamc_mqtt_string topic;			///< publish topic
-	yamc_qos_lvl_t QOS;				///< QoS level
-	bool DUP;						///< packet DUP flag
-	bool RETAIN;					///< packet RETAIN flag
-	const uint8_t* p_data;			///< payload data
-	uint32_t data_len;				///< payload data length
+	yamc_mqtt_string topic;		///< publish topic
+	yamc_qos_lvl_t   QOS;		///< QoS level
+	bool			 DUP;		///< packet DUP flag
+	bool			 RETAIN;	///< packet RETAIN flag
+	const uint8_t*   p_data;	///< payload data
+	uint32_t		 data_len;  ///< payload data length
 
 } yamc_publish_data_t;
+
+///Outgoing SUBSCRIBE packet definition
+typedef yamc_mqtt_pkt_subscribe_topic_t yamc_subscribe_data_t;
 
 /// yamc instance forward declaration
 struct yamc_instance_s;
@@ -174,20 +177,40 @@ void yamc_init(yamc_instance_t* const p_instance, const yamc_handler_cfg_t* cons
 /// parse incoming data buffer
 void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_buff, uint32_t len);
 
-/// encode and send packet
-yamc_retcode_t yamc_send_pkt(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data);
-
-///assign c string to yamc_mqtt_string object
+///assign NULL terminated c string to yamc_mqtt_string object
 void yamc_char_to_mqtt_str(const char* const p_char, yamc_mqtt_string* const p_str);
 
 ///Send CONNECT packet
 yamc_retcode_t yamc_connect(const yamc_instance_t* const p_instance, const yamc_connect_data_t* const p_data);
 
-///Set C string as PUBLISH message payload
+///Set NULL terminated C string as PUBLISH message payload
 void yamc_publish_set_char_payload(const char* const p_char, yamc_publish_data_t* const p_data);
 
 ///Send PUBLISH packet
 yamc_retcode_t yamc_publish(yamc_instance_t* const p_instance, const yamc_publish_data_t* const p_data);
 
+///Send SUBSCRIBE packet
+yamc_retcode_t yamc_subscribe(yamc_instance_t* const p_instance, const yamc_subscribe_data_t* const p_data, uint16_t data_len);
+
+//Send UNSUBSCRIBE packet
+yamc_retcode_t yamc_unsubscribe(yamc_instance_t* const p_instance, const yamc_mqtt_string* const p_topics, uint16_t topics_len);
+
+///Send PINGREQ packet
+yamc_retcode_t yamc_ping(const yamc_instance_t* const p_instance);
+
+///Send DISCONNECT packet
+yamc_retcode_t yamc_disconnect(const yamc_instance_t* const p_instance);
+
+///Send PUBACK packet
+yamc_retcode_t yamc_puback(const yamc_instance_t* const p_instance, uint16_t packet_id);
+
+///Send PUBREL packet
+yamc_retcode_t yamc_pubrel(const yamc_instance_t* const p_instance, uint16_t packet_id);
+
+///Send PUBREC packet
+yamc_retcode_t yamc_pubrec(const yamc_instance_t* const p_instance, uint16_t packet_id);
+
+///Send PUBCOMP packet
+yamc_retcode_t yamc_pubcomp(const yamc_instance_t* const p_instance, uint16_t packet_id);
 
 #endif /* YAMC_H_ */
