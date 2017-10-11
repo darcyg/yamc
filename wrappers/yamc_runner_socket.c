@@ -58,6 +58,10 @@ int main(int argc, char* argv[])
 	yamc_net_core.instance.parser_enables.PUBACK   = true;
 	yamc_net_core.instance.parser_enables.PINGRESP = true;
 	yamc_net_core.instance.parser_enables.SUBACK   = true;
+	yamc_net_core.instance.parser_enables.PUBCOMP  = true;
+	yamc_net_core.instance.parser_enables.PUBREL   = true;
+	yamc_net_core.instance.parser_enables.PUBREC  = true;
+	yamc_net_core.instance.parser_enables.UNSUBACK = true;
 
 	// process sending data to socket here...
 
@@ -77,11 +81,36 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
+	// subscribe to topics
+	yamc_subscribe_data_t subscribe_data[2];
+	memset(subscribe_data, 0, sizeof(subscribe_data));
+	yamc_char_to_mqtt_str("test1/#", &subscribe_data[0].topic);
+	yamc_char_to_mqtt_str("test2/#", &subscribe_data[1].topic);
+
+	ret = yamc_subscribe(&yamc_net_core.instance, subscribe_data, sizeof(subscribe_data) / sizeof(subscribe_data[0]));
+	if (ret != YAMC_RET_SUCCESS)
+	{
+		printf("Error sending subscribe packet: %u\n", ret);
+		exit(-1);
+	}
+
+	// unsubscribe 'test2/#'
+	yamc_mqtt_string unsubscribe_data[1];
+	memset(unsubscribe_data, 0, sizeof(unsubscribe_data));
+	yamc_char_to_mqtt_str("test2/#", &unsubscribe_data[0]);
+
+	ret = yamc_unsubscribe(&yamc_net_core.instance, unsubscribe_data, sizeof(unsubscribe_data) / sizeof(unsubscribe_data[0]));
+	if (ret != YAMC_RET_SUCCESS)
+	{
+		printf("Error sending subscribe packet: %u\n", ret);
+		exit(-1);
+	}
+
 	// send MQTT publish packet
 	yamc_publish_data_t publish_data;
 	memset(&publish_data, 0, sizeof(yamc_publish_data_t));
 
-	publish_data.QOS=YAMC_QOS_LVL1;
+	publish_data.QOS = YAMC_QOS_LVL1;
 	yamc_char_to_mqtt_str("test/hello", &publish_data.topic);
 	yamc_publish_set_char_payload("Hello world!", &publish_data);
 
@@ -92,75 +121,10 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
-	// subscribe to topic 'test/#'
-	yamc_mqtt_pkt_data_t subscribe_pkt;
-	memset(&subscribe_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
-
-	yamc_mqtt_pkt_subscribe_topic_t subscribe_topics[2];
-	memset(subscribe_topics, 0, sizeof(subscribe_topics));
-
-	char topic1[] = "test/#";
-	char topic2[] = "yamc_test/#";
-
-	subscribe_topics[0].qos.lvl		   = YAMC_QOS_LVL0;
-	subscribe_topics[0].topic_name.str = (uint8_t*)topic1;
-	subscribe_topics[0].topic_name.len = strlen(topic1);
-
-	subscribe_topics[1].qos.lvl		   = YAMC_QOS_LVL0;
-	subscribe_topics[1].topic_name.str = (uint8_t*)topic2;
-	subscribe_topics[1].topic_name.len = strlen(topic2);
-
-	subscribe_pkt.pkt_type								= YAMC_PKT_SUBSCRIBE;
-	subscribe_pkt.pkt_data.subscribe.pkt_id				= 1338;
-	subscribe_pkt.pkt_data.subscribe.payload.p_topics   = subscribe_topics;
-	subscribe_pkt.pkt_data.subscribe.payload.topics_len = sizeof(subscribe_topics) / sizeof(subscribe_topics[0]);
-
-	ret = yamc_send_pkt(&yamc_net_core.instance, &subscribe_pkt);
-	if (ret != YAMC_RET_SUCCESS)
-	{
-		printf("Error sending subscribe packet: %u\n", ret);
-		exit(-1);
-	}
-
-	//unsubscribe topic 'test/#'
-	/*
-	yamc_mqtt_pkt_data_t unsubscribe_pkt;
-	memset(&unsubscribe_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
-
-	yamc_mqtt_string unsubscribe_topics[2];
-	memset(subscribe_topics, 0, sizeof(subscribe_topics));
-
-	char unsub_topic1[] = "test/#";
-	char unsub_topic2[] = "yamc_test/#";
-
-	unsubscribe_topics[0].str = (uint8_t*)unsub_topic1;
-	unsubscribe_topics[0].len = strlen(unsub_topic1);
-
-	unsubscribe_topics[1].str = (uint8_t*)unsub_topic2;
-	unsubscribe_topics[1].len = strlen(unsub_topic2);
-
-	unsubscribe_pkt.pkt_type								= YAMC_PKT_UNSUBSCRIBE;
-	unsubscribe_pkt.pkt_data.unsubscribe.pkt_id				= 1339;
-	unsubscribe_pkt.pkt_data.unsubscribe.payload.p_topics   = unsubscribe_topics;
-	unsubscribe_pkt.pkt_data.unsubscribe.payload.topics_len = sizeof(unsubscribe_topics) / sizeof(unsubscribe_topics[0]);
-
-	ret = yamc_send_pkt(&yamc_net_core.instance, &unsubscribe_pkt);
-	if (ret != YAMC_RET_SUCCESS)
-	{
-		printf("Error sending unsubscribe packet: %u\n", ret);
-		exit(-1);
-	}
-	*/
-
 	// repeatedly send ping request to keep connection alive
 	while (!yamc_net_core_should_exit(&yamc_net_core))
 	{
-		yamc_mqtt_pkt_data_t pingreq_pkt;
-		memset(&pingreq_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
-
-		pingreq_pkt.pkt_type = YAMC_PKT_PINGREQ;
-
-		ret = yamc_send_pkt(&yamc_net_core.instance, &pingreq_pkt);
+		ret = yamc_ping(&yamc_net_core.instance);
 		if (ret != YAMC_RET_SUCCESS)
 		{
 			printf("Error sending pingreq packet: %u\n", ret);

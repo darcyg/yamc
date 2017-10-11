@@ -8,7 +8,7 @@
  * All rights reserved 2017
  *
  */
-
+#include <stdlib.h>
 #include "yamc.h"
 #include "yamc_log.h"
 
@@ -30,6 +30,28 @@ static inline void yamc_handle_publish(const yamc_instance_t* const p_instance, 
 
 	YAMC_DEBUG_PRINTF("PUBLISH topic: \"%.*s\" msg: \"%.*s\"\n", p_data->topic_name.len, p_data->topic_name.str, p_data->payload.data_len,
 					  p_data->payload.p_data);
+
+	//send puback for QoS1
+	if (p_pkt_data->flags.QOS == YAMC_QOS_LVL1)
+	{
+		yamc_retcode_t ret = yamc_puback(p_instance, p_data->packet_id);
+		if (ret != YAMC_RET_SUCCESS)
+		{
+			printf("Error sending puback packet: %u\n", ret);
+			exit(-1);
+		}
+	}
+
+	//send pubrec for QoS2
+	if (p_pkt_data->flags.QOS == YAMC_QOS_LVL2)
+	{
+		yamc_retcode_t ret = yamc_pubrec(p_instance, p_data->packet_id);
+		if (ret != YAMC_RET_SUCCESS)
+		{
+			printf("Error sending pubrec packet: %u\n", ret);
+			exit(-1);
+		}
+	}
 }
 
 static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -38,6 +60,7 @@ static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, co
 	YAMC_ASSERT(p_pkt_data != NULL);
 
 	const yamc_mqtt_pkt_generic_pubx_t* p_dest_pkt;
+	yamc_retcode_t ret=YAMC_RET_SUCCESS;
 
 	switch (p_pkt_data->pkt_type)
 	{
@@ -47,10 +70,12 @@ static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, co
 
 		case YAMC_PKT_PUBREC:
 			p_dest_pkt = &p_pkt_data->pkt_data.pubrec;
+			ret = yamc_pubrel(p_instance, p_pkt_data->pkt_data.pubrec.packet_id);
 			break;
 
 		case YAMC_PKT_PUBREL:
 			p_dest_pkt = &p_pkt_data->pkt_data.pubrel;
+			ret = yamc_pubcomp(p_instance, p_pkt_data->pkt_data.pubrel.packet_id);
 			break;
 
 		case YAMC_PKT_PUBCOMP:
@@ -67,6 +92,11 @@ static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, co
 	}
 
 	YAMC_DEBUG_PRINTF("%s: pkt_id: %d\n", yamc_mqtt_pkt_type_to_str(p_pkt_data->pkt_type), p_dest_pkt->packet_id);
+	if (ret != YAMC_RET_SUCCESS)
+	{
+		printf("Error sending QoS message: %u\n", ret);
+		exit(-1);
+	}
 }
 
 static inline void yamc_handle_suback(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)

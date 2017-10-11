@@ -20,10 +20,11 @@
 #define YAMC_TIMEOUT_S 30  // seconds
 #define YAMC_TIMEOUT_NS 0  // nanoseconds
 
+//global exit flag. If set all rx threads will exit
 static volatile bool global_exit_now = false;
 
 // timeout timer signal handler
-static void timeout_handler(sigval_t sigval)
+static void yamc_net_core_timeout_handler(sigval_t sigval)
 {
 	YAMC_UNUSED_PARAMETER(sigval);
 
@@ -34,7 +35,7 @@ static void timeout_handler(sigval_t sigval)
 }
 
 // start/prolong timeout timer wrapper
-static void timeout_pat(void* p_ctx)
+static void yamc_net_core_timeout_pat(void* p_ctx)
 {
 	YAMC_ASSERT(p_ctx != NULL);
 	yamc_net_core_t* const p_net_core = (yamc_net_core_t*)p_ctx;
@@ -53,7 +54,7 @@ static void timeout_pat(void* p_ctx)
 }
 
 // stop timeout timer
-static void timeout_stop(void* p_ctx)
+static void yamc_net_core_timeout_stop(void* p_ctx)
 {
 	YAMC_ASSERT(p_ctx != NULL);
 	yamc_net_core_t* const p_net_core = (yamc_net_core_t*)p_ctx;
@@ -70,7 +71,7 @@ static void timeout_stop(void* p_ctx)
 }
 
 // timeout timer setup
-static void setup_timer(yamc_net_core_t* const p_net_core)
+static void yamc_net_core_setup_timer(yamc_net_core_t* const p_net_core)
 {
 	YAMC_ASSERT(p_net_core != NULL);
 
@@ -80,9 +81,9 @@ static void setup_timer(yamc_net_core_t* const p_net_core)
 
 	memset(&sev, 0, sizeof(struct sigevent));
 
-	sev.sigev_signo			  = SIGRTMIN;		  // signal type
-	sev.sigev_notify		  = SIGEV_THREAD;	 // call timeout handler as if it was starting a new thread
-	sev.sigev_notify_function = timeout_handler;  // set timeout handler
+	sev.sigev_signo			  = SIGRTMIN;						// signal type
+	sev.sigev_notify		  = SIGEV_THREAD;					// call timeout handler as if it was starting a new thread
+	sev.sigev_notify_function = yamc_net_core_timeout_handler;  // set timeout handler
 
 	if ((err_code = timer_create(CLOCK_REALTIME, &sev, &p_net_core->timeout_timer)) < 0)
 	{
@@ -92,7 +93,7 @@ static void setup_timer(yamc_net_core_t* const p_net_core)
 }
 
 // write to socket wrapper
-static yamc_retcode_t socket_write_buff(void* p_ctx, const uint8_t* const buff, uint32_t len)
+static yamc_retcode_t yamc_net_core_write(void* p_ctx, const uint8_t* const buff, uint32_t len)
 {
 	YAMC_ASSERT(p_ctx != NULL);
 
@@ -111,7 +112,7 @@ static yamc_retcode_t socket_write_buff(void* p_ctx, const uint8_t* const buff, 
 	return YAMC_RET_SUCCESS;
 }
 
-static void disconnect_handler(void* p_ctx)
+static void yamc_net_core_disconnect_handler(void* p_ctx)
 {
 	YAMC_ASSERT(p_ctx != NULL);
 	yamc_net_core_t* p_net_core = (yamc_net_core_t*)p_ctx;
@@ -119,11 +120,11 @@ static void disconnect_handler(void* p_ctx)
 	YAMC_ERROR_PRINTF("yamc requested to drop connection!\n");
 
 	close(p_net_core->server_socket);
-	p_net_core->exit_now=true;
+	p_net_core->exit_now = true;
 }
 
 // receive data from socket thread
-static void* read_sock_thr(void* p_ctx)
+static void* yamc_net_core_rx_thread(void* p_ctx)
 {
 	YAMC_ASSERT(p_ctx != NULL);
 
@@ -160,7 +161,7 @@ static void* read_sock_thr(void* p_ctx)
 }
 
 // connect socket to specified host and port
-static void setup_socket(yamc_net_core_t* const p_net_core, char* hostname, int portno)
+static void yamc_net_core_setup_socket(yamc_net_core_t* const p_net_core, char* hostname, int portno)
 {
 	// server socket address struct
 	struct sockaddr_in serv_addr;
@@ -204,7 +205,7 @@ static void setup_socket(yamc_net_core_t* const p_net_core, char* hostname, int 
 }
 
 //handle shutdown (i.e. Ctrl+C) in graceful fashion
-static void sigint_handler(int signal)
+static void yamc_net_core_sigint_handler(int signal)
 {
 	YAMC_UNUSED_PARAMETER(signal);
 
@@ -213,11 +214,11 @@ static void sigint_handler(int signal)
 }
 
 //setup signal handler for Crtl+C
-static void setup_sigint_handler(void)
+static void yamc_net_core_setup_sigint_handler(void)
 {
 	struct sigaction sigint_action;
 	memset(&sigint_action, 0, sizeof(struct sigaction));
-	sigint_action.sa_handler = sigint_handler;
+	sigint_action.sa_handler = yamc_net_core_sigint_handler;
 	sigemptyset(&sigint_action.sa_mask);
 	sigint_action.sa_flags = 0;
 	sigaction(SIGINT, &sigint_action, NULL);
@@ -233,25 +234,25 @@ void yamc_net_core_connect(yamc_net_core_t* const p_net_core, char* hostname, in
 	memset(p_net_core, 0, sizeof(yamc_net_core_t));
 
 	// setup timeout timer
-	setup_timer(p_net_core);
+	yamc_net_core_setup_timer(p_net_core);
 
 	// setup socket and connect to server
-	setup_socket(p_net_core, hostname, port);
+	yamc_net_core_setup_socket(p_net_core, hostname, port);
 
 	//setup disconnect on signal
-	setup_sigint_handler();
+	yamc_net_core_setup_sigint_handler();
 
-	yamc_handler_cfg_t handler_cfg = {.disconnect	= disconnect_handler,
-									  .write		 = socket_write_buff,
-									  .timeout_pat   = timeout_pat,
-									  .timeout_stop  = timeout_stop,
+	yamc_handler_cfg_t handler_cfg = {.disconnect	= yamc_net_core_disconnect_handler,
+									  .write		 = yamc_net_core_write,
+									  .timeout_pat   = yamc_net_core_timeout_pat,
+									  .timeout_stop  = yamc_net_core_timeout_stop,
 									  .pkt_handler   = pkt_handler,
 									  .p_handler_ctx = p_net_core};
 
 	yamc_init(&p_net_core->instance, &handler_cfg);
 
 	// create thread
-	pthread_create(&p_net_core->rx_tid, NULL, read_sock_thr, p_net_core);
+	pthread_create(&p_net_core->rx_tid, NULL, yamc_net_core_rx_thread, p_net_core);
 }
 
 bool yamc_net_core_should_exit(yamc_net_core_t* const p_net_core)
@@ -269,12 +270,7 @@ void yamc_net_core_disconnect(yamc_net_core_t* const p_net_core)
 	p_net_core->exit_now = true;
 
 	// send MQTT disconnect packet
-	yamc_mqtt_pkt_data_t disconnect_pkt;
-	memset(&disconnect_pkt, 0, sizeof(yamc_mqtt_pkt_data_t));
-
-	disconnect_pkt.pkt_type = YAMC_PKT_DISCONNECT;
-
-	yamc_retcode_t ret = yamc_send_pkt(&p_net_core->instance, &disconnect_pkt);
+	yamc_retcode_t ret = yamc_disconnect(&p_net_core->instance);
 	if (ret != YAMC_RET_SUCCESS)
 	{
 		printf("Error sending disconnect packet: %u\n", ret);
