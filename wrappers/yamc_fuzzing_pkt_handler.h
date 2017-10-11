@@ -14,6 +14,6 @@
 
 #include "yamc.h"
 
-void yamc_fuzzing_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data);
+void yamc_fuzzing_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data, void* p_ctx);
 
 #endif

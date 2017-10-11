@@ -81,19 +81,19 @@ typedef struct
 struct yamc_instance_s;
 
 /// Socket write handler
-typedef yamc_retcode_t (*yamc_write_handler_t)(uint8_t* p_buff, uint32_t buff_len);
+typedef yamc_retcode_t (*yamc_write_handler_t)(void* p_ctx, uint8_t* p_buff, uint32_t buff_len);
 
 /// Disconnection request handler - signal main application that we should disconnect form server
-typedef void (*yamc_disconnect_handler_t)(void);
+typedef void (*yamc_disconnect_handler_t)(void* p_ctx);
 
 /// Start or pat (prolong) timeout timer
-typedef void (*yamc_timeout_pat_handler_t)(void);
+typedef void (*yamc_timeout_pat_handler_t)(void* p_ctx);
 
 /// Stop timeout timer
-typedef void (*yamc_timeout_stop_handler_t)(void);
+typedef void (*yamc_timeout_stop_handler_t)(void* p_ctx);
 
 /// New packet handler
-typedef void (*yamc_pkt_handler_t)(struct yamc_instance_s* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data);
+typedef void (*yamc_pkt_handler_t)(struct yamc_instance_s* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data, void* p_ctx);
 
 /// MQTT parser state enum
 typedef enum {
@@ -112,6 +112,7 @@ typedef struct
 	yamc_timeout_pat_handler_t  timeout_pat;   ///< start/restart timeout timer handler
 	yamc_timeout_stop_handler_t timeout_stop;  ///< stop timeout timer handler
 	yamc_pkt_handler_t			pkt_handler;   ///< New packet handler
+	void* 						p_handler_ctx; ///< handler context, can be null
 
 } yamc_handler_cfg_t;
 

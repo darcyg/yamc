@@ -47,8 +47,10 @@ static void timeout_handler(sigval_t sigval)
 }
 
 // start/prolong timeout timer wrapper
-static void timeout_pat(void)
+static void timeout_pat(void* p_ctx)
 {
+	YAMC_UNUSED_PARAMETER(p_ctx);
+	
 	struct itimerspec its;
 	memset(&its, 0, sizeof(struct itimerspec));
 	its.it_value.tv_sec  = YAMC_TIMEOUT_S;
@@ -63,8 +65,10 @@ static void timeout_pat(void)
 }
 
 // stop timeout timer
-static void timeout_stop(void)
+static void timeout_stop(void* p_ctx)
 {
+	YAMC_UNUSED_PARAMETER(p_ctx);
+
 	struct itimerspec its;
 	memset(&its, 0, sizeof(struct itimerspec));
 
@@ -97,8 +101,10 @@ static void setup_timer(void)
 }
 
 // write to socket wrapper
-static yamc_retcode_t socket_write_buff(uint8_t* buff, uint32_t len)
+static yamc_retcode_t socket_write_buff(void* p_ctx, uint8_t* buff, uint32_t len)
 {
+	YAMC_UNUSED_PARAMETER(p_ctx);
+	
 	ssize_t n = write(STDOUT_FILENO, buff, len);
 	if (n < 0)
 	{
@@ -108,8 +114,10 @@ static yamc_retcode_t socket_write_buff(uint8_t* buff, uint32_t len)
 	return YAMC_RET_SUCCESS;
 }
 
-static void disconnect_handler(void)
+static void disconnect_handler(void* p_ctx)
 {
+	YAMC_UNUSED_PARAMETER(p_ctx);
+	
 	YAMC_ERROR_PRINTF("yamc requested to drop connection!\n");
 	exit(-1);
 }

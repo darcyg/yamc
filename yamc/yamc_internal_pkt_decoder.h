@@ -303,7 +303,7 @@ static inline void yamc_decode_pkt(yamc_instance_t* const p_instance)
 	}
 
 	// if packet was decoded successfully launch user handler
-	if (decoder_retcode == YAMC_RET_SUCCESS) p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data);
+	if (decoder_retcode == YAMC_RET_SUCCESS) p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data, p_instance->handlers.p_handler_ctx);
 }
 
 #endif /* ifdef __YAMC_INTERNAL_PKT_DECODER_H__ */

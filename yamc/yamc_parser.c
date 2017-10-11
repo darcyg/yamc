@@ -31,7 +31,7 @@ static inline void timeout_pat(const yamc_instance_t* const p_instance)
 {
 	YAMC_ASSERT(p_instance != NULL);
 
-	if (p_instance->handlers.timeout_pat != NULL) p_instance->handlers.timeout_pat();
+	if (p_instance->handlers.timeout_pat != NULL) p_instance->handlers.timeout_pat(p_instance->handlers.p_handler_ctx);
 }
 
 // stop timeout timer
@@ -39,7 +39,7 @@ static inline void timeout_stop(const yamc_instance_t* const p_instance)
 {
 	YAMC_ASSERT(p_instance != NULL);
 
-	if (p_instance->handlers.timeout_stop != NULL) p_instance->handlers.timeout_stop();
+	if (p_instance->handlers.timeout_stop != NULL) p_instance->handlers.timeout_stop(p_instance->handlers.p_handler_ctx);
 }
 
 /**
@@ -71,7 +71,7 @@ static inline uint8_t yamc_mqtt_decode_remaining_len(yamc_instance_t* const p_in
 		if (multiplier > 128 * 128 * 128)
 		{
 			YAMC_LOG_ERROR("Malformed Remaining Length\n");
-			p_instance->handlers.disconnect();
+			p_instance->handlers.disconnect(p_instance->handlers.p_handler_ctx);
 			return false;
 		}
 		multiplier *= 128;
@@ -145,7 +145,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 					p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type < YAMC_PKT_CONNECT)
 				{
 					YAMC_LOG_ERROR("Invalid packet type: %02X\n", p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type);
-					p_instance->handlers.disconnect();
+					p_instance->handlers.disconnect(p_instance->handlers.p_handler_ctx);
 					return;
 				}
 
@@ -176,7 +176,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 				if (p_instance->rx_pkt.fixed_hdr.remaining_len.decoded_val > YAMC_MQTT_MAX_LEN)
 				{
 					YAMC_LOG_ERROR("Decoded var_data length exceeds MQTT spec.\n");
-					p_instance->handlers.disconnect();
+					p_instance->handlers.disconnect(p_instance->handlers.p_handler_ctx);
 					return;
 				}
 

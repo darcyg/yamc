@@ -60,6 +60,11 @@ static inline uint16_t yamc_mqtt_string_raw_length(const yamc_mqtt_string* const
 	return (p_mqtt_str->len) ? p_mqtt_str->len + 2 : 0;
 }
 
+static inline yamc_retcode_t yamc_send_buff(yamc_instance_t* const p_instance, uint8_t* p_buff, uint32_t buff_len)
+{
+	return p_instance->handlers.write(p_instance->handlers.p_handler_ctx, p_buff, buff_len);
+}
+
 static inline yamc_retcode_t yamc_send_word(yamc_instance_t* const p_instance, const uint16_t word)
 {
 	YAMC_ASSERT(p_instance != NULL);
@@ -67,7 +72,7 @@ static inline yamc_retcode_t yamc_send_word(yamc_instance_t* const p_instance, c
 	yamc_mqtt_word_t mqtt_word = {0};
 	yamc_encode_mqtt_word(word, &mqtt_word);
 
-	return p_instance->handlers.write(mqtt_word.raw, 2);
+	return yamc_send_buff(p_instance, mqtt_word.raw, 2);
 }
 
 static inline yamc_retcode_t yamc_send_str(yamc_instance_t* const p_instance, const yamc_mqtt_string* const p_mqtt_str)
@@ -83,7 +88,7 @@ static inline yamc_retcode_t yamc_send_str(yamc_instance_t* const p_instance, co
 
 	if (p_mqtt_str->len > 0)
 	{
-		return p_instance->handlers.write(p_mqtt_str->str, p_mqtt_str->len);
+		return yamc_send_buff(p_instance, p_mqtt_str->str, p_mqtt_str->len);
 	}
 	else
 	{
@@ -101,7 +106,7 @@ static inline yamc_retcode_t yamc_send_fixed_hdr(yamc_instance_t* const p_instan
 	send_buff[0] = p_fixed_hdr->pkt_type.raw;
 	memcpy(&send_buff[1], p_fixed_hdr->remaining_len.raw, p_fixed_hdr->remaining_len.raw_len);
 
-	return p_instance->handlers.write(send_buff, p_fixed_hdr->remaining_len.raw_len + 1);
+	return yamc_send_buff(p_instance, send_buff, p_fixed_hdr->remaining_len.raw_len + 1);
 }
 
 static inline yamc_retcode_t yamc_send_connect(yamc_instance_t* const p_instance, yamc_mqtt_pkt_data_t* const p_pkt_data)
@@ -178,7 +183,7 @@ static inline yamc_retcode_t yamc_send_connect(yamc_instance_t* const p_instance
 
 	// send protocol version = 4 and conect flags
 	uint8_t protocol_flags[2] = {4, p_pkt_data->pkt_data.connect.connect_flags.raw};
-	ret						  = p_instance->handlers.write(protocol_flags, 2);
+	ret						  = yamc_send_buff(p_instance, protocol_flags, 2);
 	if (ret != YAMC_RET_SUCCESS) return ret;
 
 	// send keepalive value
@@ -273,7 +278,7 @@ static inline yamc_retcode_t yamc_send_publish(yamc_instance_t* const p_instance
 	// send payload
 	if (p_pkt_data->pkt_data.publish.payload.data_len > 0)
 	{
-		ret = p_instance->handlers.write(p_pkt_data->pkt_data.publish.payload.p_data, p_pkt_data->pkt_data.publish.payload.data_len);
+		ret = yamc_send_buff(p_instance, p_pkt_data->pkt_data.publish.payload.p_data, p_pkt_data->pkt_data.publish.payload.data_len);
 		if (ret != YAMC_RET_SUCCESS) return ret;
 	}
 
@@ -330,7 +335,7 @@ static inline yamc_retcode_t yamc_send_subscribe(yamc_instance_t* const p_instan
 		ret = yamc_send_str(p_instance, &p_pkt_data->pkt_data.subscribe.payload.p_topics[i].topic_name);
 		if (ret != YAMC_RET_SUCCESS) return ret;
 
-		ret = p_instance->handlers.write((uint8_t*)&p_pkt_data->pkt_data.subscribe.payload.p_topics[i].qos, 1);
+		ret = yamc_send_buff(p_instance, (uint8_t*)&p_pkt_data->pkt_data.subscribe.payload.p_topics[i].qos, 1);
 		if (ret != YAMC_RET_SUCCESS) return ret;
 	}
 

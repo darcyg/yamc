@@ -92,10 +92,12 @@ static inline void yamc_handle_pingresp(const yamc_instance_t* const p_instance,
 	YAMC_DEBUG_PRINTF("PINGRESP\n");
 }
 
-void yamc_debug_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)
+void yamc_debug_pkt_handler_main(yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data, void* p_ctx)
 {
 	YAMC_ASSERT(p_instance != NULL);
 	YAMC_ASSERT(p_pkt_data != NULL);
+
+	YAMC_UNUSED_PARAMETER(p_ctx);
 
 	// decode data according to packet type
 	switch (p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type)
