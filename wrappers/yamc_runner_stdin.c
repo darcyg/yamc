@@ -101,7 +101,7 @@ static void setup_timer(void)
 }
 
 // write to socket wrapper
-static yamc_retcode_t socket_write_buff(void* p_ctx, uint8_t* buff, uint32_t len)
+static yamc_retcode_t socket_write_buff(void* p_ctx, const uint8_t* const buff, uint32_t len)
 {
 	YAMC_UNUSED_PARAMETER(p_ctx);
 	

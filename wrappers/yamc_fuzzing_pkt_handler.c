@@ -36,8 +36,8 @@ static inline void yamc_handle_publish(const yamc_instance_t* const p_instance, 
 					  p_data->payload.p_data);
 
 	// overwrite decoded data so program has chance to crash on bad memory allocation
-	memset_s(p_data->topic_name.str, 0, p_data->topic_name.len);
-	memset_s(p_data->payload.p_data, 0, p_data->payload.data_len);
+	memset_s((uint8_t*)p_data->topic_name.str, 0, p_data->topic_name.len);
+	memset_s((uint8_t*)p_data->payload.p_data, 0, p_data->payload.data_len);
 }
 
 static inline void yamc_handle_pub_x(const yamc_instance_t* const p_instance, const yamc_mqtt_pkt_data_t* const p_pkt_data)

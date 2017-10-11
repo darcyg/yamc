@@ -16,7 +16,7 @@
 #include "yamc_port.h"
 
 /// Maximum MQTT message length allowed by standard
-#define YAMC_MQTT_MAX_LEN 268435455
+#define YAMC_MQTT_MAX_LEN 268435455UL
 
 /// MQTT packet type
 typedef enum {
@@ -50,7 +50,7 @@ typedef enum {
 // MQTT string
 typedef struct
 {
-	uint8_t* str;  // variable length UTF-8 string. MQTT strings are NOT \0 terminated!
+	const uint8_t* str;  // variable length UTF-8 string. MQTT strings are NOT \0 terminated!
 	uint16_t len;  // string length
 } yamc_mqtt_string;
 
@@ -207,7 +207,7 @@ typedef struct
 		 * Payload contains the Application Message that is being published.
 		 * The content and format of the data is application specific
 		 */
-		uint8_t* p_data;
+		const uint8_t* p_data;
 
 		/**
 		 * \brief Payload length

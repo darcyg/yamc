@@ -18,3 +18,4 @@ void yamc_net_core_connect(yamc_net_core_t* const p_net_core, char* hostname, in
 bool yamc_net_core_should_exit(yamc_net_core_t* const p_net_core);
 
 void yamc_net_core_disconnect(yamc_net_core_t* const p_net_core);
+
