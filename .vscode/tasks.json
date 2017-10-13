@@ -30,7 +30,7 @@
                 "echo": true,
                 "reveal": "silent",
                 "focus": false,
-                "panel": "dedicated"
+                "panel": "shared"
             }
         },
         {
