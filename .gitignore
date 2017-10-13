@@ -1,5 +1,8 @@
 *.o
 *.exe
+*.a
 yamc_socket
 yamc_stdin
-*.a
+yamc_pub
+yamc_sub
+examples/*_cmdline.?

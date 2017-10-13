@@ -1,0 +1,52 @@
+#gengetopt script for yamc_pub
+
+package "yamc_pub"
+version "1.0.0"
+usage "yamc_pub {-h hostname} {-p port} -t topic {-m message} -q qos_level {-c clientId}"
+
+versiontext "yamc_pub is a simple MQTT client. It will publish single message and exit.
+
+YAMC (Yet Another MQTT Client) is released under MIT License by Michal Lower <https://github.com/keton/yamc>."
+
+args "-f yamc_pub_cmd_parser -a yamc_pub_args_info -F yamc_pub_cmdline --default-optional --no-handle-error"
+
+option "host" h "host to connect to."
+    string typestr="hostname"
+    default="localhost"
+option "port" p "port to connect to."
+    short typestr="portno"
+    default="1883"
+option "user" u "User name to login to host"
+    string typestr="username"
+option "password" P "Password to login to host"
+    string typestr="password"
+    dependon="user"
+option "topic" t "MQTT topic to publish message to."
+    string typestr="mqtt_topic"
+    required
+option "message" m "MQTT message to publish."
+    string typestr="message_content"
+option "client-id" c "MQTT Client ID"
+    string typestr="client_id"
+option "qos" q "QoS level for the message."
+    short typestr="qos_level"
+    values="0","1","2"
+    default="0"
+option "no-clean-session" N "Specify this to disable clean session flag." flag off
+option "keepalive-timeout" - "Session keep alive timeout in seconds."
+    short typestr="keepalive_timeout"
+    default="30"
+option "will-topic" - "MQTT will topic."
+    string typestr="message_topic"
+option "will-msg" - "MQTT will message."
+    string typestr="message_content"
+    dependon="will-topic"
+option "will-remain" W "Specify this to enable will remain flag." flag off
+    dependon="will-topic"
+    dependon="will-msg"
+option "will-qos" - "QoS level for the message."
+    short typestr="qos_level"
+    values="0","1","2"
+    default="0"
+    dependon="will-topic"
+    dependon="will-msg"
