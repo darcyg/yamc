@@ -3,9 +3,9 @@
  *
  * yamc_runner_socket.c - Pass stdin to yamc_parse_buf(). Allows fuzzing of yamc.
  *
- * Author: Michal Lower <keton22@gmail.com>
- *
- * All rights reserved 2017
+ * Author: Michal Lower <https://github.com/keton>
+ * 
+ * Licensed under MIT License (see LICENSE file in main repo directory)
  *
  */
 

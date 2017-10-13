@@ -3,9 +3,9 @@
  *
  * yamc_pkt_decoder.c - Parses MQTT packet data and calls user defined event handler.
  *
- * Author: Michal Lower <keton22@gmail.com>
- *
- * All rights reserved 2017
+ * Author: Michal Lower <https://github.com/keton>
+ * 
+ * Licensed under MIT License (see LICENSE file in main repo directory)
  *
  */
 

@@ -1,3 +1,14 @@
+/*
+ * YAMC - Yet Another MQTT Client library
+ *
+ * yamc_net_core.c - handles networking and timers on Unix platform
+ *
+ * Author: Michal Lower <https://github.com/keton>
+ * 
+ * Licensed under MIT License (see LICENSE file in main repo directory)
+ * 
+ */
+
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>

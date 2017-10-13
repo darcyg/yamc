@@ -1,3 +1,14 @@
+/*
+ * YAMC - Yet Another MQTT Client library
+ *
+ * yamc_pub.c - Simple MQTT client example. Publishes message to MQTT server and quits.
+ *
+ * Author: Michal Lower <https://github.com/keton>
+ * 
+ * Licensed under MIT License (see LICENSE file in main repo directory)
+ * 
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
