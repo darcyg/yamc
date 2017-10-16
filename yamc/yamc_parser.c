@@ -127,7 +127,8 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 	// packet assembly state machine
 	do  // while (reparse)
 	{
-		reparse = false;
+		reparse							  = false;
+		uint8_t decode_remaining_len_done = false;
 
 		switch (p_instance->parser_state)
 		{
@@ -162,7 +163,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 			case YAMC_PARSER_FIX_HDR:
 				YAMC_LOG_DEBUG("State: YAMC_PARSER_FIX_HDR\n");
 
-				uint8_t decode_remaining_len_done = false;
+				decode_remaining_len_done = false;
 
 				// decode 'remaining length' field in fixed header
 				while ((decode_remaining_len_done = yamc_mqtt_decode_remaining_len(p_instance, p_buff[buff_pos++])) == false &&
