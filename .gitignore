@@ -5,4 +5,3 @@ yamc_socket
 yamc_stdin
 yamc_pub
 yamc_sub
-examples/*_cmdline.?
