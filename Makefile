@@ -23,6 +23,7 @@ endif
 
 all: libyamc.a examples
 
+libyamc.a: CFLAGS += -I$(PROJ_DIR)/wrappers
 libyamc.a: $(YAMC_FILES:.c=.o)
 	$(AR) -rcs $@ $^
 
