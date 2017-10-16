@@ -184,7 +184,7 @@ static inline yamc_retcode_t yamc_send_connect(const yamc_instance_t* const p_in
 	ret = yamc_send_str(p_instance, &mqtt_magic);
 	if (ret != YAMC_RET_SUCCESS) return ret;
 
-	// send protocol version = 4 and conect flags
+	// send protocol version = 4 and connect flags
 	uint8_t protocol_flags[2] = {4, p_pkt_data->pkt_data.connect.connect_flags.raw};
 	ret						  = yamc_send_buff(p_instance, protocol_flags, 2);
 	if (ret != YAMC_RET_SUCCESS) return ret;

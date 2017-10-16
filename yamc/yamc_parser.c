@@ -196,7 +196,7 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 			case YAMC_PARSER_SKIP_PKT:  ///< Packet is too long to process, drop data until next one arrives
 				YAMC_LOG_DEBUG("State: YAMC_PARSER_SKIP_PKT\n");
 
-			// intentional fallthrough!
+			// intentional fall through!
 
 			case YAMC_PARSER_VAR_DATA:  ///< Parser is collecting variable header and payload data
 

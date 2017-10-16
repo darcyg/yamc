@@ -122,7 +122,7 @@ typedef struct
 		struct
 		{
 			const uint8_t res : 1;			  ///< reserved
-			uint8_t		  clean_session : 1;  ///< clean sesion flag
+			uint8_t		  clean_session : 1;  ///< clean session flag
 			uint8_t		  will_flag : 1;	  ///< Will present flag
 			uint8_t		  will_qos : 2;		  ///< Will QoS
 			uint8_t		  will_remain : 1;	///< Will remain

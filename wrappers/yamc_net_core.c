@@ -224,7 +224,7 @@ static void yamc_net_core_sigint_handler(int signal)
 	global_exit_now = true;
 }
 
-//setup signal handler for Crtl+C
+//setup signal handler for Ctrl+C
 static void yamc_net_core_setup_sigint_handler(void)
 {
 	struct sigaction sigint_action;
