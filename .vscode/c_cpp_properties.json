@@ -36,7 +36,8 @@
                 "/usr/include",
                 "${workspaceRoot}",
                 "${workspaceRoot}/yamc",
-                "${workspaceRoot}/wrappers"
+                "${workspaceRoot}/wrappers",
+                "${workspaceRoot}/examples"
             ],
             "defines": [
                 "YAMC_DEBUG=1",
@@ -49,7 +50,9 @@
                     "/usr/local/include",
                     "/usr/include/x86_64-linux-gnu",
                     "/usr/include",
-                    "${workspaceRoot}"
+                    "${workspaceRoot}",
+                    "${workspaceRoot}/wrappers",
+                    "${workspaceRoot}/examples"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
