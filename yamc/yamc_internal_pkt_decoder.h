@@ -61,8 +61,6 @@ static inline uint8_t is_parsing_enabled(const yamc_instance_t* const p_instance
 			YAMC_LOG_DEBUG("Unknown packet type %d\n", pkt_type);
 			return false;
 	}
-
-	return false;
 }
 
 /// Copy packet type and flags to yamc_mqtt_pkt_data_t struct
@@ -261,8 +259,19 @@ static inline void yamc_decode_pkt(yamc_instance_t* const p_instance)
 	// terminate if parsing of given packet type is not enabled
 	if (!is_parsing_enabled(p_instance, p_instance->rx_pkt.fixed_hdr.pkt_type.flags.type)) return;
 
-	yamc_retcode_t		 decoder_retcode = YAMC_RET_CANT_PARSE;
+	yamc_retcode_t decoder_retcode = YAMC_RET_CANT_PARSE;
+
+//Suppress '#370-D: variable "mqtt_pkt"  has an uninitialized const field' warning on Keil
+#if defined(__CC_ARM)
+#pragma push
+#pragma diag_suppress 370
+#endif
+
 	yamc_mqtt_pkt_data_t mqtt_pkt_data;
+
+#if defined(__CC_ARM)
+#pragma pop
+#endif
 
 	memset(&mqtt_pkt_data, 0, sizeof(yamc_mqtt_pkt_data_t));
 
@@ -303,7 +312,8 @@ static inline void yamc_decode_pkt(yamc_instance_t* const p_instance)
 	}
 
 	// if packet was decoded successfully launch user handler
-	if (decoder_retcode == YAMC_RET_SUCCESS) p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data, p_instance->handlers.p_handler_ctx);
+	if (decoder_retcode == YAMC_RET_SUCCESS)
+		p_instance->handlers.pkt_handler(p_instance, &mqtt_pkt_data, p_instance->handlers.p_handler_ctx);
 }
 
 #endif /* ifdef __YAMC_INTERNAL_PKT_DECODER_H__ */
