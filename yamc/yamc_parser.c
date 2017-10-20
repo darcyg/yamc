@@ -273,7 +273,14 @@ void yamc_parse_buff(yamc_instance_t* const p_instance, const uint8_t* const p_b
 					{
 						p_instance->parser_state = YAMC_PARSER_IDLE;
 						// reparse only if there's next packet present
-						if (next_packet_present) reparse = true;
+						if (next_packet_present)
+						{
+							next_packet_present = false;
+							reparse				= true;
+		
+							// rearm timeout timer
+							timeout_pat(p_instance);
+						}
 					}
 				}
 				break;
