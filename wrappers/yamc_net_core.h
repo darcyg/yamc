@@ -24,7 +24,7 @@ typedef struct
 
 } yamc_net_core_t;
 
-void yamc_net_core_connect(yamc_net_core_t* const p_net_core, char* hostname, int port, yamc_pkt_handler_t pkt_handler);
+void yamc_net_core_connect(yamc_net_core_t* const p_net_core, const char* const hostname, const int port, yamc_pkt_handler_t pkt_handler);
  
 bool yamc_net_core_should_exit(yamc_net_core_t* const p_net_core);
 
