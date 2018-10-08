@@ -1,48 +1,44 @@
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
-    "version": "2.0.0",
+	"version": "2.0.0",
+	"windows": {
+		"options": {
+			"shell": {
+				"executable": "c:\\cygwin64\\bin\\bash.exe",
+				"args": [
+					"-l",
+					"-i",
+					"-c"
+				],
+			},
+			"env": {
+				"CHERE_INVOKING":"1"
+			}
+		}
+	},
     "tasks": [
         {
-            "taskName": "make",
+            "label": "make",
             "type": "shell",
-            "command": "make -j",
+			"command": "make",
+			"identifier": "compile",
+			"args": [
+				"-j"
+			],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": {
-                "owner": "cpp",
-                "fileLocation": [
-                    "relative",
-                    "${workspaceRoot}" //gcc reports all paths as relative to makefile location
-                ],
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 5
-                }
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "silent",
-                "focus": false,
-                "panel": "shared"
-            }
+           
         },
         {
-            "taskName": "make clean",
+            "label": "make clean",
             "type": "shell",
-            "command": "make clean",
-            "presentation": {
-                "echo": true,
-                "reveal": "never",
-                "focus": false,
-                "panel": "shared"
-            }
+			"command": "make",
+			"args": [
+				"clean"
+			]
         }
     ]
 }
