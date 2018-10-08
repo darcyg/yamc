@@ -24,7 +24,7 @@ endif
 all: libyamc.a examples
 
 libyamc.a: CFLAGS += -I$(PROJ_DIR)/wrappers
-libyamc.a: $(YAMC_FILES:.c=.o)
+libyamc.a: $(YAMC_FILES:.c=.o) $(PROJ_DIR)/wrappers/yamc_net_core.o
 	$(AR) -rcs $@ $^
 
 wrappers: CFLAGS += -I$(PROJ_DIR)/wrappers
