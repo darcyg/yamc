@@ -172,7 +172,7 @@ static void* yamc_net_core_rx_thread(void* p_ctx)
 }
 
 // connect socket to specified host and port
-static void yamc_net_core_setup_socket(yamc_net_core_t* const p_net_core, char* hostname, int portno)
+static void yamc_net_core_setup_socket(yamc_net_core_t* const p_net_core, const char* const hostname, const int portno)
 {
 	// server socket address struct
 	struct sockaddr_in serv_addr;
@@ -237,7 +237,7 @@ static void yamc_net_core_setup_sigint_handler(void)
 	sigaction(SIGTERM, &sigint_action, NULL);
 }
 
-void yamc_net_core_connect(yamc_net_core_t* const p_net_core, char* hostname, int port, yamc_pkt_handler_t pkt_handler)
+void yamc_net_core_connect(yamc_net_core_t* const p_net_core, const char* const hostname, const int port, yamc_pkt_handler_t pkt_handler)
 {
 	YAMC_ASSERT(p_net_core != NULL);
 	YAMC_ASSERT(pkt_handler != NULL);
